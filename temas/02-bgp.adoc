@@ -1,0 +1,279 @@
+== Encaminamiento interdominio
+
+=== Generalidades
+
+==== Sistemas autónomos
+
+Son un conjunto de redes que comparten una estrategia de encaminamiento común,
+posiblemente gestionadas por una misma administración. Para identificar
+un sistema autónomo se precisa un identificador único. Se pueden tener dos
+tipos de encaminamiento:
+
+- *Interdominio*: Se usa una única métrica con coste a minimizar.
+- *Intradominio*: Existen varias métricas posibles a lo largo de una ruta. No
+hay un coste directo asociado a una única ruta, en su lugar se usa una función
+compleja que depende de diferentes características.
+
+Algunas características deseables son:
+
+* Topología arbitraria
+* Expresividad
+* Escalabilidad
+* Intercambio de información mínima
+* Convergencia rápida
+* Ausencia de bucles
+* Independencia entre organizaciones
+* Independencia del protocolo intradominio
+* Lentitud de cambio
+* Descentralización de funciones
+* Independencia de protocolo de red
+
+[NOTE]
+El flujo de tráfico siempre va en dirección opuesta al flujo de encaminamiento.
+
+==== Políticas de uso
+
+Las políticas de uso son unas reglas administrativas que afectan a la elección
+de la ruta. Pueden depender de los siguientes parámetros:
+
+* Cambio
+* Calidad de servicio
+* Clase de usuarios
+* Tiempo
+* Autenticación
+* No interferencia y límite de recursos
+* Tipo de aplicación
+
+Las políticas se pueden clasificar de la siguiente forma:
+
+[align="center"]
+|===
+| *Política*  | *Acceso* | *Selección* | *Tarificación*
+| *Origen*    |          |             |
+| *Destino*   |          |             |
+| *Tránsito*  |          |             |
+|===
+
+=== BGP
+
+==== Aspectos generales
+
+*BGP* (_Border Gateway Protocol_) permite:
+
+* Recabar información de alcanzabilidad de los *AS* vecinos.
+* Propagar dicha información de forma interna.
+* Determinar buenas rutas basándose en dicha información y teniendo en cuenta
+políticas de uso.
+* Anunciar las propias subredes al resto de Internet (Esto es obligatorio).
+
+Un *ASN* es un número de Sistema Autónomo. Se trata de un identificador de 16 ó
+32 bits definido por la link:https://tools.ietf.org/html/rfc4893[RFC4893].
+Los identificadores entre 1 y 64511 son asignados por autoridades de registro,
+mientras que el rango 64512 a 65534 son de uso privado, es decir,
+están prohibidos en Internet. El 0 y el 65535 están reservados.
+El identificador puede ser asignado por el ISP o por RIR (subdelegado de IANA).
+En BGP un camino o ruta será una secuencia de *ASNs*.
+
+BGP sólamente es necesario para los proveedores de servicio o para usuarios
+que requieran de una conexión a más de un proveedor de servicio.
+
+BGP realiza un encaminamiento *salto a salto*, *distribuido* y *jerárquico*.
+Se caracteriza por que el establecimiento de vecindades es *manual*, el
+intercambio de información de encaminamiento se basa en un *vector de caminos*.
+El cálculo de las rutas se hace buscando el *camino más corto* teniendo en
+cuenta las *políticas de uso*.
+
+==== Establecimiento de vecindades
+
+En BGP el establecimiento de vecindades se realiza de forma *manual*.
+Se pueden encontrar dos tipos de vecinos: *vecinos internos* y *vecinos
+externos* dependiendo si se encuentran dentro del mismo AS o en otro AS.
+
+*iBGP* es el protocolo usado entre vecinos *internos* o que se encuentran en
+el mismo AS. Estos vecinos no tienen por qué ser adyacentes. Para que el
+protocolo funcione correctamente, los routers deben encontrarse conectados
+en *malla total*. Debe ser implementado en todos los *routers internos entre
+conexiones al exterior*.
+
+*eBGP* se usa entre vecinos *externos* o que se encuentran en diferentes AS,
+habitualmente adyacentes. Se envía una ruta por destino con los atributos
+importantes. Cuando se envía la ruta *se añade el pripio ASN* a la secuencia
+de ASNs y el atributo "siguiente salto" es sobreescrito.
+
+[TIP]
+====
+* Lo que se aprende por *eBGP* se comunica por *iBGP*
+* Lo que se aprende por *iBGP* se comunica por *eBGP*
+* Lo *no* se aprende por *eBGP* *no* se comunica por *iBGP*
+====
+
+==== Intercambio de infomación de encaminamiento
+
+Los vecinos BGP intercambian rutas basadas en una secuencia de ASNs. Siempre
+que se propaga una ruta se le sufija a la salida el ASN propio, además se
+incrementa el número de saltos cada vez que se atraviesa un AS. Debido a que
+las rutas se almacenan *es posible detectar y eliminar bucles*.
+
+Dentro del propio AS no se contempla la métrica, la capacidad de la ruta,
+el número de saltos dentro de cada AS o el retardo.
+
+Cada router puede aprender rutas de los vecinos BGP externos usando eBGP o de
+otros encaminadores de su AS que tengan vecinos externos mediante iBGP. Es
+posible que las rutas puedan ser descartadas si así se configura en las
+políticas.
+
+TIP: Se propaga sólo la mejor ruta calculada.
+
+----
+Router A in AS100
+  interface ethernet 5/0
+  ip address 222.222.10.2 255.255.255.240 <1>
+  !
+
+  router bgp 100 <2>
+  network 220.220.8.0 mask 255.255.252.0
+  neighbor 222.222.10.1 remote-as 101 <3>
+  neighbor 222.222.10.1 prefix-list RouterC in <4><5>
+  neighbor 222.222.10.1 prefix-list RouterC out <5>
+  !
+----
+
+<1> Dirección IP en la interfaz ethernet
+<2> ASN local
+<3> ASN remoto
+<4> Dirección IP de `RouterC`
+<5> Filtros entrantes y salientes
+
+[TIP]
+====
+* Sólo puede haber una ruta a cada bloque de IPs al mismo tiempo
+* Al establecer vecindad se intercambia todo el vector y después sólamente
+se actualizan los cambios.
+====
+
+===== Rutas BGP
+
+La ruta BGP se compone de un *prefijo* y unos *atributos*. El prefijo es la
+partición del espacio de rutas cuya alcanzabilidad se está anunciando. Se
+envía la dirección inicial de la subred y la máscara. Inicialmente sólo
+funcionaba con IPv4 (link:https://tools.ietf.org/html/rfc4760[RFC4760]).
+Los atributos pueden ser *reconocidos* u *opcionales*.
+
+Los atributos de las rutas BGP son:
+
+* *`AS-PATH` [obligatorio]*: Identifica a los AS a través de los que ha llegado
+el prefijo. Permite detectar bucles y se incrementa con cada salida de un AS.
+Siempre se prefieren las rutas con un *`AS-PATH` más corto*.
++
+|===
+| `192.67.95.0/24` | `3847 701`
+| `140.222.0.0`    | `3847 1673`
+| `204.70.0.0/15`  | `3847 3561`
+| `207.240.0.0/16` | `3847`
+|===
+* *`NEXT-HOP` [obligatorio]*: Indica la dirección IP del router que debe
+usarse para las rutas anunciadas.
+* *Origen [obligatorio]*: Indica la procedencia de la información que se
+propaga: IGP, EGP o desconocido en ese orden de preferencia.
+* *Preferencia local [discrecional]*: Sólo se usa en iBGP. Permite indicar el
+router propio que se prefiere como salida. Se prefiere el router con el valor
+más alto.
+* *Discriminador de salida múltiple [no transitivo]*: Indica a los vecinos
+*externos* el enlace de entrada preferido y afecta a todas las rutas con el
+mismo `AS-PATH`
+
+===== Mensajes BGP
+
+Los mensajes BGP se usan sobre el protocolo TCP (puerto 179). Los posibles
+mensajes son:
+
+* `OPEN`: Abre la conexión y autentica al emisor.
+* `UPDATE`: Anuncia nuevas rutas o borra las viejas.
+* `KEEPALIVE`: Mantiene la conexión en ausencia de `UPDATE`, o asiente un
+mensaje `OPEN`.
+* `NOTIFICATION`: Informa de errores en el mensaje precedente o libera la
+conexión.
+
+Si se cae la conexión TCP todas las rutas aprendidas por dicha conexión
+deben eliminarse.
+
+===== Anuncios de ruta
+
+Mediante iBGP sólo se envían las rutas que se aprenden directamente de vecinos
+eBGP, no las que se aprenden de vecinos iBGP. Es necesario que todos los
+routers que ejecutan iBGP estén conectados en malla total. Se envían todos
+los atributos. El valor de `NEXT-HOP` no se modifica en los saltos entre
+routers iBGP, sólamente entre saltos de AS a AS.
+
+==== Selección de ruta
+
+La ruta se elige en el siguiente orden teniendo en cuenta que se descartan
+todas las rutas que tienen un `NEXT-HOP` inalcanzable:
+
+. Ruta más específica
+. Mayor preferencia local
+. Ruta generada localmente
+. `AS-PATH` más corto
+. `NEXT-HOP` más cercano
+. Menor origin (IGP < EGP < desconocido)
+. Menor métrica en destino
+. eBGP > iBGP
+. Menor coste IGP al siguiente salto
+. Menor ID de router
+
+[NOTE]
+Hay que tener en cuenta que las políticas pueden determinar la
+aceptación o el rechazo de una ruta que llega en un mensaje `UPDATE`.
+Estás políticas se basan en el prefijo o en el `AS-PATH`. Todas las rutas
+que se rechazan no se llegan a considerar en el proceso de elección.
+
+[WARNING]
+Al conformar iBGP una malla total de routers,
+pueden aparecer problemas de escalabilidad. También pueden existir problemas
+con los mensajes `UPDATE` cuando la red crece demasiado o cuando se cambia
+una política que debe propagarse, ya que puede causar oscilaciones.
+
+Existen diferentes técnicas para mitigar los problemas de escalabilidad:
+
+* *Refresco de rutas*: Un cambio de políticas requiere un reinicio manual de
+BGP porque las rutas descartadas con las políticas antiguas no se habían
+guardado. El reinicio es costoso, disruptivo y lento.
++
+Como solución se puede hacer una petición (también manual) de refresco de todas
+las rutas tras el cambio de políticas.
+* *Grupos de vecinos*: Los vecinos iBGP se encuentran en malla total y reciben
+copias idénticas del mismo mensaje `UPDATE` provocando que muchos de los
+cálculos sean repetidos.
++
+Como solución se pueden agrupar todos los vecinos que tengan una misma
+política de *salida* y genera sólamente un mensaje `UPDATE` para ese grupo.
+* *Mitigación de oscilaciones*: Cambio oscilante en la ruta por cambio de
+algún atributo, con efecto de largo alcance.
++
+Como solución se puede intentar predecir el comportamiento futuro y
+suprimir las rutas que oscilen y anunciar sólo las estables.
++
+Para los anuncios entrates de vecinos externos se puede penalizar cada cambio
+que se produzca y, posteriormente, ir decrementando la penalización con el
+tiempo. Si se supera un umbral la ruta ya no se propaga por considerarse
+"inestable". Si la ruta se estabiliza se puede volver a anunciar.
+* *Confederaciones y reflectores de rutas*: Los vecinos iBGP se conectan en
+malla total. Las mallas totales *no son escalables*.
++
+Como solución se pueden añadir más niveles jerárquicos. Entre _subASs_ se usa
+eBGP, como si fuesen vecinos externos, pero conservando `NEXT-HOP`,
+`LOCAL_PREF` y `MED`. Dentro del _subAS_ se usa malla total e iBGP. Desde
+fuera del AS se vería todo exactamente igual.
++
+Otra solución es usar *reflectores de rutas*. Los reflectores de rutas son
+vecinos iBGP que actúan como informadores de rutas para otros routers
+iBGP. Los reflectores de rutas sí están mallados. Cuando un reflector de
+ruta recibe una ruta de uno de sus clientes iBGP la anuncia al resto de los
+clientes iBGP. Cuando recibe una ruta de otro dispositivo que no sea un
+cliente suyo anuncia la ruta *sólamente a sus clientes*. Se permite, por
+robustez, a un router iBGP ser cliente de varios reflectores de rutas
+al mismo tiempo.
++
+[NOTE]
+Pese a que la solución de dividir el AS en _subASs_ parece más natural, en
+la práctica es preferida la solución de los *reflectores de rutas*.
