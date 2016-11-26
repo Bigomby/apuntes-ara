@@ -8,12 +8,15 @@
 :revnumber: 0.1.0
 :keywords: arquitectura de redes, telemática
 :toc:
-:toclevels: 2
+:toc-title: Índice
+:toclevels: 3
+:toc-position: left
 :nofooter:
 :header:
-:numbered:
 :imagesdir: imagenes
 :caption!:
 :icons: font
 
 = Arquitectura de Redes Avanzadas
+
+include::temas/02-bgp.adoc[]
