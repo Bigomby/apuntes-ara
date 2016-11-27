@@ -709,7 +709,7 @@ b.conum * { color: inherit !important; }
 <div id="toc" class="toc2">
 <div id="toctitle">Índice</div>
 <ul class="sectlevel1">
-<li><a href="#_encaminamiento_interdominio">Encaminamiento interdominio</a>
+<li><a href="#_tema_2_encaminamiento_interdominio">Tema 2: Encaminamiento interdominio</a>
 <ul class="sectlevel2">
 <li><a href="#_generalidades">Generalidades</a>
 <ul class="sectlevel3">
@@ -727,12 +727,33 @@ b.conum * { color: inherit !important; }
 </li>
 </ul>
 </li>
+<li><a href="#_tema_3_introducción_a_ipv6">Tema 3: Introducción a IPv6</a>
+<ul class="sectlevel2">
+<li><a href="#_generalidades_2">Generalidades</a></li>
+<li><a href="#_formato_de_paquete">Formato de paquete</a>
+<ul class="sectlevel3">
+<li><a href="#_cabeceras_de_extensión">Cabeceras de extensión</a></li>
+</ul>
+</li>
+<li><a href="#_direccionamiento">Direccionamiento</a>
+<ul class="sectlevel3">
+<li><a href="#_asignación">Asignación</a></li>
+<li><a href="#_representación">Representación</a></li>
+<li><a href="#_tipos_de_direcciones">Tipos de direcciones</a></li>
+</ul>
+</li>
+<li><a href="#_icmpv6">ICMPv6</a></li>
+<li><a href="#_dhcpv6">DHCPv6</a></li>
+<li><a href="#_encaminamiento">Encaminamiento</a></li>
+<li><a href="#_migración_desde_ipv6">Migración desde IPv6</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_encaminamiento_interdominio">Encaminamiento interdominio</h2>
+<h2 id="_tema_2_encaminamiento_interdominio">Tema 2: Encaminamiento interdominio</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_generalidades">Generalidades</h3>
@@ -1307,6 +1328,880 @@ la práctica es preferida la solución de los <strong>reflectores de rutas</stro
 </ul>
 </div>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tema_3_introducción_a_ipv6">Tema 3: Introducción a IPv6</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_generalidades_2">Generalidades</h3>
+<div class="paragraph">
+<p>La necesidad de IPv6 se debe a las ineficiencas de la versión anterior, IPv4.
+En IPv4 tenemos una complejidad innecesaria debido a las <strong>opciones de longituid
+variables</strong>, la <strong>costosa fragmentación</strong> y el formato del paquete <strong>no es
+extensible</strong>.
+Además en IPv4 el número de direcciones es actualmente insuficiente para
+cubrir toda la demanda ya que hoy en día tenemos terminales que están siempre
+activos, por lo que necistan un dirección <strong>en todo momento</strong>. La telefonía y el
+IoT exige un gran cantidad de direcciones así como los países emergentes. Otro
+problema son las <strong>deficiencias en las asignaciones</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Otro problema con IPv4 es que ha ido solucinando una serie de necesidades que
+iban apareciendo sobre la marcha, por ejemplo: IPSec, Mobile IP, QoS, DHCP,
+NAT, etc.</p>
+</div>
+<div class="paragraph">
+<p>Una solución para la falta de direcciones fue NAT
+(<em>Network Address Translation</em>), sin embargo, es sólamente válido como una
+solución <strong>temporal</strong>, puesto que limita el número de servidores internos,
+impide el funcionamiento de aplicaciones P2P, afecta al rendimiento, robustez
+y seguridad y no resuelve totalmente el problema de la escasez de direcciones.</p>
+</div>
+<div class="paragraph">
+<p>IPv6 viene a suplir estos problemas de IPv4. En resumen IPv6 se carateriza por:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Capacidades de direccionamiento extendidas.</p>
+</li>
+<li>
+<p>Estructura jerárquica que permite tablas de encaminamiento más compactas.</p>
+</li>
+<li>
+<p>Auto configuración y reconfiguración automáticas.</p>
+</li>
+<li>
+<p>Cabecera optimizada y soporte de flujos.</p>
+</li>
+<li>
+<p>Soporte mejorado para opciones y extensiones.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_formato_de_paquete">Formato de paquete</h3>
+<div class="paragraph">
+<p>Los cambios respecto a IPv4 tienen el objetivo de acelerar el procesado de los
+paquetes en los routers, para ello se pretende:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Eliminar la información opcional en la cabecera básica</p>
+</li>
+<li>
+<p>Reducir el número de campos</p>
+</li>
+<li>
+<p>Eliminar los campos de longitud variable</p>
+</li>
+<li>
+<p>Eliminar los campos de flags</p>
+</li>
+<li>
+<p>Añadir extensibilidad más flexible</p>
+</li>
+<li>
+<p>Alinear a 64 bits</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Los cambios respecto a los paquetes IPv4 son:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Eliminaciones</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Se eliminan el tratamiento de la fragmentación</p>
+</li>
+<li>
+<p>Se eliminan las opciones IP</p>
+</li>
+<li>
+<p>Se elimina la suma de verificación</p>
+</li>
+<li>
+<p>Se elimine el campo de longitud de la cabecera</p>
+</li>
+<li>
+<p>El campo de longitud excluye la cabecera</p>
+</li>
+<li>
+<p>Alineado a 64 bits</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Redenominaciones</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Tiempo de vida: número de saltos</p>
+</li>
+<li>
+<p>Protocolo: siguiente cabecera</p>
+</li>
+<li>
+<p>Precedencia y tipo de servicio: clase de tráfico</p>
+</li>
+<li>
+<p>Longitud de direcciones de 32 a 128 bits</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Extensiones</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Etiqueta de flujo</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="listingblock text-center">
+<div class="title">Paquete IPv6</div>
+<div class="content">
+<pre>0        4        8        12       16       20       24       31
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Version| Traffic Class |           Flow Label                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Payload Length        |  Next Header  |   Hop Limit   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                         Source Address                        +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                      Destination Address                      +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Next Header  |  Hdr Ext Len  |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+.                                                               .
+.                            Options                            .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Nos encontramos con las siguientes cabeceras en IPv6:</p>
+</div>
+<div class="sect3">
+<h4 id="_cabeceras_de_extensión">Cabeceras de extensión</h4>
+<div class="paragraph">
+<p>Sustituyen los campos de <strong>opciones</strong> y <strong>protocolo encapsulado</strong>. Esta cabecera
+<strong>sólamente se procesa en el destino</strong> (excepto la cabecera salto a salto).</p>
+</div>
+<div class="listingblock text-center">
+<div class="title">Cabecera de extensión</div>
+<div class="content">
+<pre>+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Next Header  |  Hdr Ext Len  |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+.                            Options                            .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Están definidas las siguiente cabeceras de extensión:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Salto a salto</strong>: Es la única procesada por cada salto intermedio,
+es decir, por cada router. Ejemplo: jumbograma, el TLV lleva un campo de
+longitud extra de 32 bits, que da para paquetes de hasta 4GB.</p>
+</li>
+<li>
+<p><strong>Opciones de destino</strong>: Sólo si hay de encaminamiento. Procesada sólo en el
+destino o destinos. Ejemplo de uso: soporte de movilidad.</p>
+</li>
+<li>
+<p><strong>De encaminamiento</strong>: Procesada por los routers intermedios que se indiquen.
+Puede aparecer la primera o tras otra cabecera de extensión. El tipo de
+encaminamiento 0 es similar a la opción de encaminamiento laxo de IPv4.</p>
+</li>
+<li>
+<p><strong>De fragmento</strong>: Se usa para enviar paquetes mayores que la MTU. Nunca se
+fragmentan por lor routers. <strong>No se aconseja su uso</strong>.</p>
+</li>
+<li>
+<p><strong>De autenticación</strong>: Para autenticación IPsec.</p>
+</li>
+<li>
+<p><strong>ESP</strong>: Cabecera de encapsulado de seguridad.</p>
+</li>
+<li>
+<p><strong>De movilidad</strong></p>
+</li>
+<li>
+<p><strong>Opciones de destino</strong>: Si no hay de encaminamiento.</p>
+</li>
+<li>
+<p><strong>Protocolo encapsulado</strong>: UDP, TCP, ICMP, SCTP, OSPF, etc.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Las cabeceras de extensión deben aparecer en dicho orden.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_direccionamiento">Direccionamiento</h3>
+<div class="paragraph">
+<p>En IPv6 hay direcciones de <strong>128 bits</strong> divididas en tres campos de longitud
+variable:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>GRP</strong> (<em>Global Routing Prefix</em>): Identifica el tipo de dirección.</p>
+</li>
+<li>
+<p><strong>Subred</strong>: Identifica al enlace.</p>
+</li>
+<li>
+<p><strong>ID de interfaz</strong>: Identifica una interfaz en el enlace.</p>
+</li>
+</ul>
+</div>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    GRP    |    ID de Subred    |         ID de Interfaz       |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Cualquier campo puede ir todo a 0 o todo a 1.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_asignación">Asignación</h4>
+<div class="paragraph">
+<p>El identificador de interfaz es la última parte de la dirección. Sirve para
+identificar una dirección dentro de un enlace, por lo que debe ser única dentro
+de dicho enlace (también puede serlo globalmente). Hay varias formas en la que
+una interfaz puede obtener una dirección:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>EUI-64 (<em>IEEE Extended Unique Identifier 64</em>): Para las LANs futuras.</p>
+</li>
+<li>
+<p>Expandido de una dirección 802.1 de 48 bits. Se construye insertando <code>FFFE</code> en
+el centro y complementando el bit <code>u/g</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre>MAC:    00:C0:FE:12:3A:4F
+EUI-64: 02:C0:FE:FF:FE:12:3A:4f</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Número pseudoaleatorio autogenerado.</p>
+</li>
+<li>
+<p>Obtenida mediante DHCP.</p>
+</li>
+<li>
+<p>Asignada manualmente.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_representación">Representación</h4>
+<div class="listingblock">
+<div class="content">
+<pre>2031:0000:130F:0000:0000:09C0:876A:130B <i class="conum" data-value="1"></i><b>(1)</b>
+http://[2001:DB8:1003::f]:8080/index.html <i class="conum" data-value="2"></i><b>(2)</b>
+2000::/3 <i class="conum" data-value="3"></i><b>(3)</b></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Dirección IPv6</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Dirección IPv6 en una URL</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Dirección IPv6 con máscara</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Hay una serie de simplificaciones que pueden realizarse sobre una dirección IP:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Los ceros iniciales son opcionales</p>
+</li>
+<li>
+<p>Los campos a 0 sucesivos pueden colapsarse <strong>una sóla vez</strong></p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="title">IPv6 simplificada</div>
+<div class="content">
+<pre>2031:0:130F::9C0:876A:130B</pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Ojo con las compresiones:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>CAFF:CA01:0000:0056:0000:ABCD:EF12:1234/64
+CAFF:CA01::56/64</pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tipos_de_direcciones">Tipos de direcciones</h4>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>La misma interfaz puede tener varias interfaces, de cualquier tipo.</p>
+</li>
+<li>
+<p>No hay direcciones de difusión.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Existen dos direcciones especiales:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>::</code>: Dirección no especificada (todo ceros). Se usa cuando no se sabe cuál
+es la propia, por ejemplo, al pedir una dirección mediante DHCP.</p>
+</li>
+<li>
+<p><code>::1</code>: Autodirección, equivale a la <code>127.0.0.1</code> en IPv4.</p>
+</li>
+</ul>
+</div>
+<div class="sect4">
+<h5 id="_direcciones_unicast">Direcciones unicast</h5>
+<div class="paragraph">
+<p>Las direcciones unicast pueden ser:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Global agregable</strong>: <code>2000::/3</code>. Son utilizables para el
+encaminamiento y estructuradas para que puedan agregarse. Un espacio de
+direccionamiento tan grande necesita agregación eficiente para ser escalable.
+Permite multiubicación (<em>multihoming</em>) sin usar BGP.</p>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+------------------------+-----------+----------------------------+
+| 001 |     GRP          |    SLA    |      ID de Interfaz        |
++------------------------+-----------+----------------------------+</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>SLA (<em>Site-Level Aggregator</em>): Usada por el poseedor del GRP para
+organizar su red de forma jerárquica.</p>
+</li>
+<li>
+<p>ID de Interfaz: Identifica interfaces en un enlace (subred) en formato
+EUI-64 modificado.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Local a la ubicación</strong> (<em>site local</em>): <code>FEC0::/10</code>. Son similares
+a las direcciones IPv4 <code>192.168.x.x</code>, por lo que <strong>no debería aparecer en
+Internet</strong>. Están cosideradas obsoletas y reemplazadas por las direcciones
+localmente unicas.</p>
+</li>
+<li>
+<p><strong>Local al enlace</strong> (<em>link local</em>): <code>FE80::/10</code>. Usan el formato
+EUI-64 modificado. Se usan durante la configuración, similar a las direcciones
+IPv4 <code>169.254.0.0</code>, o cuando no hay routers (no son encaminables).</p>
+</li>
+<li>
+<p><strong>Local única</strong> (<em>unique local</em>): <code>FC00::/8</code> o <code>FD00::/8</code>. Son direcciones
+encaminables, pero <strong>sólamente en un área limitada</strong>, no hacia Internet. El prefijo
+puede llegar hasta <code>/48</code> localmente único para mejor filtrado. Los 40 bits
+restantes deben generarse <strong>de forma aleatoria</strong>. En caso de fugas (hacia
+Internet) no hay problemas ya que llevan un prefijo único. Si conectan dos
+áreas la probabilidad de colisión es baja. Son direcciones IP independientes
+de la operadora.</p>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_direcciones_ipv4_e_ipv6">Direcciones IPv4 e IPv6</h6>
+<div class="paragraph">
+<p>Todas las direcciones IPv4 caben dentro del rango IPv6. Hay diferentes formas
+de elegir direcciones IPv6 que se puedan utilizar en conjunto con IPv4:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Direcciones IPv6 compatibles</strong>: Usan el prefijo <code>::96</code>, por ejemplo,
+<code>::193.147.162.130</code>. Se usa para formas túneles de forma automática. <strong>No son
+escalables</strong>, por lo que actualmente se encuentran en desuso.</p>
+</li>
+<li>
+<p><strong>Direcciones IPv6 mapeadas</strong>: Usan el prefijo <code>::FFFF:/96</code>, por ejemplo,
+<code>::FFFF:193.147.162.130</code>. Son habituales en casos donde se usan ambas versiones.
+Un <em>socket</em> atiende en ambas direcciones al mismo tiempo y la aplicación envía
+los paquetes con destino mapeado.</p>
+</li>
+<li>
+<p><strong>Direcciones 6to4</strong>: Son del tipo <code>2002:XXXX:XXXX::/48</code>, donde <code>XXXX:XXXX</code> es
+la dirección IPv4.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_elección_de_direcciones">Elección de direcciones</h6>
+<div class="paragraph">
+<p>Al tener varias posibles direcciones se puede escoger cuál utilizar en cada
+caso. Se sigue el siguiente orden de prioridad a la hora de elegir una
+dirección:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Para el origen</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>La misma con la que llegó el paquete que se responde</p>
+</li>
+<li>
+<p>La de ámbito más restringido</p>
+</li>
+<li>
+<p>La que no esté en desuso</p>
+</li>
+<li>
+<p>La local</p>
+</li>
+<li>
+<p>La de la interfaz de salida</p>
+</li>
+<li>
+<p>La más conveniente para el destino (por ejemplo IPv4 mapeada)</p>
+</li>
+<li>
+<p>La temporal</p>
+</li>
+<li>
+<p>La de prefijo coincidente más larga</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Para el destino</p>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Evitar las inútiles (por ejemplo que no se tenga ruta)</p>
+</li>
+<li>
+<p>La del mismo ámbito</p>
+</li>
+<li>
+<p>La local</p>
+</li>
+<li>
+<p>La más conveniente</p>
+</li>
+<li>
+<p>La de prefijo coincidente más largo</p>
+</li>
+<li>
+<p>Según el orden devuelto por el DNS</p>
+</li>
+</ol>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_direcciones_em_multicast_em">Direcciones <em>multicast</em></h5>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Debido a que las direcciones <em>broadcast</em> son costosas ya que interrumpe a todos
+los dispositivos que se encuentran en el enlace, se opta por no usarlas en
+IPv6, las direcciones de <em>multicast</em> juegan ese papel.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Las direcciones <em>multicast</em> se puede asignar a varias interfaces de distintos
+equipos y el paquete se entregará a todos ellos. Son del tipo:</p>
+</div>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+----+----+-------------------------------------------------------+
+| FF | AB |              Grupo multicast (112 bits)               |
++----+----+-------------------------------------------------------+</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A es el <em>flag bit</em> de la forma <code>0RPT</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>0</code>: Reservado</p>
+</li>
+<li>
+<p><code>R</code>: Punto de encuentro empotrado (encaminamiento <em>multicast</em>)</p>
+</li>
+<li>
+<p><code>P</code>: Dirección asignada basada en el prefijo <em>unicast</em></p>
+</li>
+<li>
+<p><code>T</code>: Dirección dinámica o reconocida</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>B es el ámbito</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>1</code>: Local a la interfaz (loopback)</p>
+</li>
+<li>
+<p><code>2</code>: Local al enlace (no rutable)</p>
+</li>
+<li>
+<p><code>4</code>: Local al ámbito administrativo</p>
+</li>
+<li>
+<p><code>5</code>: Local a la ubicación (red física)</p>
+</li>
+<li>
+<p><code>8</code>: Local a la organización (múltiples ubicaciones, uso en VPNs)</p>
+</li>
+<li>
+<p><code>E</code>: Global (puede salir a Internet)</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_direcciones_reservadas">Direcciones reservadas</h6>
+<div class="paragraph">
+<p>Hay algunas direcciones multicast reservadas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>FF01::1</code>, todas las intrfaces del nodo</p>
+</li>
+<li>
+<p><code>FF02::1</code>, todos los nodos del enlace</p>
+</li>
+<li>
+<p><code>FF02::2</code>, todos los routers del enlace</p>
+</li>
+<li>
+<p><code>FF02::9</code>, todos los routers RIP del enlace</p>
+</li>
+<li>
+<p><code>FF05::1:3</code>, todos los servidores DHCP en la red local</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_dirección_multicast_de_nodo_solicitado">Dirección multicast de nodo solicitado</h6>
+<div class="paragraph">
+<p>Son direcciones <em>multicast</em> que sólo escucha un nodo concreto. Tienen la forma
+<code>FF02::1:FFXX:XXXX</code> donde <code>XX:XXXX</code> se toman de los 24 bits menos significativos
+del identificador de interfaz. Todos los nodos tienen esta dirección. Se mapea
+directamente a la <em>multicast</em> del enlace.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Mientras que en IPv4 hay que obtener la direcciones <em>multicast</em>, en IPv6 los
+prefijos <em>unicast</em> conllevan prefijos <em>multicast</em>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_ejemplo_de_dirección_em_multicast_em">Ejemplo de dirección <em>multicast</em></h6>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+----+-------+--------+------+------+------------------+-------------+
++  8 |   4   |    4   |   8  |   8  |        64        |      32     |
++----+-------+--------+------+------+------------------+-------------+
+| FF | Flags | Ámbito | RSVD | Plen |  Network-Prefix  |  Group-ID   |
++----+-------+--------+------+------+------------------+-------------+
+| FF |       3E       |  00  |  40  |  2001:DB8:100:E  |  0000:1111  |
++----+-------+--------+------+------+------------------+-------------+</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>A = 3 = 0b0011</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>R = 0</code>: No es un punto de encuentro empotrado.</p>
+</li>
+<li>
+<p><code>P = 1</code>: Es una dirección basada en el prefijo unicast.</p>
+</li>
+<li>
+<p><code>T = 1</code>: Es una dirección dinámica.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>B = E</code>: Es una dirección global (puede salir a Internet).</p>
+</li>
+<li>
+<p><code>RSVD = 00</code></p>
+</li>
+<li>
+<p><code>Plen = 0x40 = 64</code>: La dirección del prefijo de red (<em>Network-Prefix</em>) es de
+64 bytes.</p>
+</li>
+<li>
+<p>Prefijo de red: <code>2001:DB8:100:E</code>.</p>
+</li>
+<li>
+<p>ID de grupo: <code>0000:1111</code>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_correspondencia_ipv6_multicast_con_direcciones_iee_802_1_48_bits">Correspondencia IPv6 multicast con direcciones IEE 802.1 48 bits</h6>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+----+-------+--------+-----------------------+----------------------+
++  8 |   4   |    4   |           80          |           32         |
++----+-------+--------+-----------------------+----------------------+
+| FF | Flags | Ámbito |   Más significativos  | Menos significativos |
++----+-------+--------+---------------+-------+----------------------+
+                                      | 33:33 |     XX:XX:XX:XX      |
+                                      |-------+----------------------+
+                                      |              48              |
+                                      +------------------------------+</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Los bits más significativos se pierden en la correspondencia.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_direcciones_em_anycast_em">Direcciones <em>anycast</em></h5>
+<div class="paragraph">
+<p>Son direcciones asignadas a varias interfaces de <strong>routers</strong> distintos. El paquete
+se entrega al <strong>más cercano</strong>. Las direcciones se encuentran en el mismo espacio
+que las direcciones <em>unicast</em>. Nunca deben usarse como direcciones de origen,
+ni por un sistema final (no router).</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Su uso es en parte expermiental
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_direcciones_imprescindibles">Direcciones imprescindibles</h5>
+<div class="paragraph">
+<p>Una interfaz requiere:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Su dirección local al enlace (de autoconfiguración)</p>
+</li>
+<li>
+<p>Su dirección de bucle (autodirección o loopback)</p>
+</li>
+<li>
+<p>Una dirección unicast</p>
+</li>
+<li>
+<p>La multicast "a todos los nodos"</p>
+</li>
+<li>
+<p>La multicast solicitada para cada unicast y anycast que tenga</p>
+</li>
+<li>
+<p>Las multicast de los grupos a los que pertenezca</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Si además es de un router:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>La anycast de las subredes en las interfaces en las que actúa de router</p>
+</li>
+<li>
+<p>La multicast "a todos los routers"</p>
+</li>
+<li>
+<p>Las anycast que tenga configuradas</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_obtención_de_direcciones_ipv6">Obtención de direcciones IPv6</h5>
+<div class="paragraph">
+<p>Las direcciones IPv6 son asignadas de forma jerárquica por la IANA según
+ubicación. IANA asigna dentro del rango <code>2000::/3</code>, un <code>/12</code> a cada RIR. Las
+direcciones se asignan a ISPs, no a empresas. Se reparte de forma que:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Se asigna una partición <code>/48</code> por omisión</p>
+</li>
+<li>
+<p>Se asigna una partición <code>/64</code> si se sabe que sólo habrá una subred.</p>
+</li>
+<li>
+<p>Se asigna una partición <code>/128</code> (una única dirección) si se sabe que es un
+usuario final con un único equipo.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_icmpv6">ICMPv6</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_dhcpv6">DHCPv6</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_encaminamiento">Encaminamiento</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_migración_desde_ipv6">Migración desde IPv6</h3>
+
 </div>
 </div>
 </div>
