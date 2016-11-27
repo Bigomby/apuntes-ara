@@ -14,9 +14,10 @@
 :nofooter:
 :header:
 :imagesdir: imagenes
-:caption!:
 :icons: font
 
 = Arquitectura de Redes Avanzadas
 
 include::temas/02-bgp.adoc[]
+
+include::temas/03-ipv6.adoc[]

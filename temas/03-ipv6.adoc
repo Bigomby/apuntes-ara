@@ -1,0 +1,422 @@
+== Tema 3: Introducción a IPv6
+
+=== Generalidades
+
+La necesidad de IPv6 se debe a las ineficiencas de la versión anterior, IPv4.
+En IPv4 tenemos una complejidad innecesaria debido a las *opciones de longituid
+variables*, la *costosa fragmentación* y el formato del paquete *no es
+extensible*.
+Además en IPv4 el número de direcciones es actualmente insuficiente para
+cubrir toda la demanda ya que hoy en día tenemos terminales que están siempre
+activos, por lo que necistan un dirección *en todo momento*. La telefonía y el
+IoT exige un gran cantidad de direcciones así como los países emergentes. Otro
+problema son las *deficiencias en las asignaciones*.
+
+Otro problema con IPv4 es que ha ido solucinando una serie de necesidades que
+iban apareciendo sobre la marcha, por ejemplo: IPSec, Mobile IP, QoS, DHCP,
+NAT, etc.
+
+Una solución para la falta de direcciones fue NAT
+(_Network Address Translation_), sin embargo, es sólamente válido como una
+solución *temporal*, puesto que limita el número de servidores internos,
+impide el funcionamiento de aplicaciones P2P, afecta al rendimiento, robustez
+y seguridad y no resuelve totalmente el problema de la escasez de direcciones.
+
+IPv6 viene a suplir estos problemas de IPv4. En resumen IPv6 se carateriza por:
+
+* Capacidades de direccionamiento extendidas.
+* Estructura jerárquica que permite tablas de encaminamiento más compactas.
+* Auto configuración y reconfiguración automáticas.
+* Cabecera optimizada y soporte de flujos.
+* Soporte mejorado para opciones y extensiones.
+
+=== Formato de paquete
+
+Los cambios respecto a IPv4 tienen el objetivo de acelerar el procesado de los
+paquetes en los routers, para ello se pretende:
+
+* Eliminar la información opcional en la cabecera básica
+* Reducir el número de campos
+* Eliminar los campos de longitud variable
+* Eliminar los campos de flags
+* Añadir extensibilidad más flexible
+* Alinear a 64 bits
+
+Los cambios respecto a los paquetes IPv4 son:
+
+* Eliminaciones
+  ** Se eliminan el tratamiento de la fragmentación
+  ** Se eliminan las opciones IP
+  ** Se elimina la suma de verificación
+  ** Se elimine el campo de longitud de la cabecera
+  ** El campo de longitud excluye la cabecera
+  ** Alineado a 64 bits
+* Redenominaciones
+  ** Tiempo de vida: número de saltos
+  ** Protocolo: siguiente cabecera
+  ** Precedencia y tipo de servicio: clase de tráfico
+  ** Longitud de direcciones de 32 a 128 bits
+* Extensiones
+  ** Etiqueta de flujo
+
+[.text-center]
+.Paquete IPv6
+----
+0        4        8        12       16       20       24       31
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Version| Traffic Class |           Flow Label                  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Payload Length        |  Next Header  |   Hop Limit   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                         Source Address                        +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                      Destination Address                      +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Next Header  |  Hdr Ext Len  |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+.                                                               .
+.                            Options                            .
+.                                                               .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+----
+
+Nos encontramos con las siguientes cabeceras en IPv6:
+
+==== Cabeceras de extensión
+
+Sustituyen los campos de *opciones* y *protocolo encapsulado*. Esta cabecera
+*sólamente se procesa en el destino* (excepto la cabecera salto a salto).
+
+[.text-center]
+.Cabecera de extensión
+----
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  Next Header  |  Hdr Ext Len  |                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               +
+|                                                               |
+.                            Options                            .
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+----
+
+Están definidas las siguiente cabeceras de extensión:
+
+* *Salto a salto*: Es la única procesada por cada salto intermedio,
+es decir, por cada router. Ejemplo: jumbograma, el TLV lleva un campo de
+longitud extra de 32 bits, que da para paquetes de hasta 4GB.
+* *Opciones de destino*: Sólo si hay de encaminamiento. Procesada sólo en el
+destino o destinos. Ejemplo de uso: soporte de movilidad.
+* *De encaminamiento*: Procesada por los routers intermedios que se indiquen.
+Puede aparecer la primera o tras otra cabecera de extensión. El tipo de
+encaminamiento 0 es similar a la opción de encaminamiento laxo de IPv4.
+* *De fragmento*: Se usa para enviar paquetes mayores que la MTU. Nunca se
+fragmentan por lor routers. *No se aconseja su uso*.
+* *De autenticación*: Para autenticación IPsec.
+* *ESP*: Cabecera de encapsulado de seguridad.
+* *De movilidad*
+* *Opciones de destino*: Si no hay de encaminamiento.
+* *Protocolo encapsulado*: UDP, TCP, ICMP, SCTP, OSPF, etc.
+
+NOTE: Las cabeceras de extensión deben aparecer en dicho orden.
+
+// TODO: Diagrama de encaminamiento laxo
+// TODO: Diagrama de los tipos de cabeceras
+
+=== Direccionamiento
+
+En IPv6 hay direcciones de *128 bits* divididas en tres campos de longitud
+variable:
+
+* *GRP* (_Global Routing Prefix_): Identifica el tipo de dirección.
+* *Subred*: Identifica al enlace.
+* *ID de interfaz*: Identifica una interfaz en el enlace.
+
+[.text-center]
+----
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|    GRP    |    ID de Subred    |         ID de Interfaz       |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+----
+
+NOTE: Cualquier campo puede ir todo a 0 o todo a 1.
+
+==== Asignación
+
+El identificador de interfaz es la última parte de la dirección. Sirve para
+identificar una dirección dentro de un enlace, por lo que debe ser única dentro
+de dicho enlace (también puede serlo globalmente). Hay varias formas en la que
+una interfaz puede obtener una dirección:
+
+* EUI-64 (_IEEE Extended Unique Identifier 64_): Para las LANs futuras.
+* Expandido de una dirección 802.1 de 48 bits. Se construye insertando `FFFE` en
+el centro y complementando el bit `u/g`:
++
+----
+MAC:    00:C0:FE:12:3A:4F
+EUI-64: 02:C0:FE:FF:FE:12:3A:4f
+----
+* Número pseudoaleatorio autogenerado.
+* Obtenida mediante DHCP.
+* Asignada manualmente.
+
+==== Representación
+
+----
+2031:0000:130F:0000:0000:09C0:876A:130B <1>
+http://[2001:DB8:1003::f]:8080/index.html <2>
+2000::/3 <3>
+----
+
+<1> Dirección IPv6
+<2> Dirección IPv6 en una URL
+<3> Dirección IPv6 con máscara
+
+Hay una serie de simplificaciones que pueden realizarse sobre una dirección IP:
+
+* Los ceros iniciales son opcionales
+* Los campos a 0 sucesivos pueden colapsarse *una sóla vez*
+
+.IPv6 simplificada
+----
+2031:0:130F::9C0:876A:130B
+----
+
+[WARNING]
+====
+Ojo con las compresiones:
+----
+CAFF:CA01:0000:0056:0000:ABCD:EF12:1234/64
+CAFF:CA01::56/64
+----
+====
+
+==== Tipos de direcciones
+
+
+[NOTE]
+====
+* La misma interfaz puede tener varias interfaces, de cualquier tipo.
+* No hay direcciones de difusión.
+====
+
+Existen dos direcciones especiales:
+
+* `::`: Dirección no especificada (todo ceros). Se usa cuando no se sabe cuál
+es la propia, por ejemplo, al pedir una dirección mediante DHCP.
+* `::1`: Autodirección, equivale a la `127.0.0.1` en IPv4.
+
+===== Direcciones unicast
+
+Las direcciones unicast pueden ser:
+
+* *Global agregable*: `2000::/3`. Son utilizables para el
+encaminamiento y estructuradas para que puedan agregarse. Un espacio de
+direccionamiento tan grande necesita agregación eficiente para ser escalable.
+Permite multiubicación (_multihoming_) sin usar BGP.
++
+[.text-center]
+----
++------------------------+-----------+----------------------------+
+| 001 |     GRP          |    SLA    |      ID de Interfaz        |
++------------------------+-----------+----------------------------+
+----
+  ** SLA (_Site-Level Aggregator_): Usada por el poseedor del GRP para
+  organizar su red de forma jerárquica.
+  ** ID de Interfaz: Identifica interfaces en un enlace (subred) en formato
+  EUI-64 modificado.
+* *Local a la ubicación* (_site local_): `FEC0::/10`. Son similares
+a las direcciones IPv4 `192.168.x.x`, por lo que *no debería aparecer en
+Internet*. Están cosideradas obsoletas y reemplazadas por las direcciones
+localmente unicas.
+* *Local al enlace* (_link local_): `FE80::/10`. Usan el formato
+EUI-64 modificado. Se usan durante la configuración, similar a las direcciones
+IPv4 `169.254.0.0`, o cuando no hay routers (no son encaminables).
+* *Local única* (_unique local_): `FC00::/8` o `FD00::/8`. Son direcciones
+encaminables, pero *sólamente en un área limitada*, no hacia Internet. El prefijo
+puede llegar hasta `/48` localmente único para mejor filtrado. Los 40 bits
+restantes deben generarse *de forma aleatoria*. En caso de fugas (hacia
+Internet) no hay problemas ya que llevan un prefijo único. Si conectan dos
+áreas la probabilidad de colisión es baja. Son direcciones IP independientes
+de la operadora.
+
+====== Direcciones IPv4 e IPv6
+
+Todas las direcciones IPv4 caben dentro del rango IPv6. Hay diferentes formas
+de elegir direcciones IPv6 que se puedan utilizar en conjunto con IPv4:
+
+* *Direcciones IPv6 compatibles*: Usan el prefijo `::96`, por ejemplo,
+`::193.147.162.130`. Se usa para formas túneles de forma automática. *No son
+escalables*, por lo que actualmente se encuentran en desuso.
+* *Direcciones IPv6 mapeadas*: Usan el prefijo `::FFFF:/96`, por ejemplo,
+`::FFFF:193.147.162.130`. Son habituales en casos donde se usan ambas versiones.
+Un _socket_ atiende en ambas direcciones al mismo tiempo y la aplicación envía
+los paquetes con destino mapeado.
+* *Direcciones 6to4*: Son del tipo `2002:XXXX:XXXX::/48`, donde `XXXX:XXXX` es
+la dirección IPv4.
+
+====== Elección de direcciones
+
+Al tener varias posibles direcciones se puede escoger cuál utilizar en cada
+caso. Se sigue el siguiente orden de prioridad a la hora de elegir una
+dirección:
+
+* Para el origen
+  . La misma con la que llegó el paquete que se responde
+  . La de ámbito más restringido
+  . La que no esté en desuso
+  . La local
+  . La de la interfaz de salida
+  . La más conveniente para el destino (por ejemplo IPv4 mapeada)
+  . La temporal
+  . La de prefijo coincidente más larga
+* Para el destino
+  . Evitar las inútiles (por ejemplo que no se tenga ruta)
+  . La del mismo ámbito
+  . La local
+  . La más conveniente
+  . La de prefijo coincidente más largo
+  . Según el orden devuelto por el DNS
+
+===== Direcciones _multicast_
+
+[TIP]
+Debido a que las direcciones _broadcast_ son costosas ya que interrumpe a todos
+los dispositivos que se encuentran en el enlace, se opta por no usarlas en
+IPv6, las direcciones de _multicast_ juegan ese papel.
+
+Las direcciones _multicast_ se puede asignar a varias interfaces de distintos
+equipos y el paquete se entregará a todos ellos. Son del tipo:
+
+[.text-center]
+----
++----+----+-------------------------------------------------------+
+| FF | AB |              Grupo multicast (112 bits)               |
++----+----+-------------------------------------------------------+
+----
+
+* A es el _flag bit_ de la forma `0RPT`
+  ** `0`: Reservado
+  ** `R`: Punto de encuentro empotrado (encaminamiento _multicast_)
+  ** `P`: Dirección asignada basada en el prefijo _unicast_
+  ** `T`: Dirección dinámica o reconocida
+* B es el ámbito
+  ** `1`: Local a la interfaz (loopback)
+  ** `2`: Local al enlace (no rutable)
+  ** `4`: Local al ámbito administrativo
+  ** `5`: Local a la ubicación (red física)
+  ** `8`: Local a la organización (múltiples ubicaciones, uso en VPNs)
+  ** `E`: Global (puede salir a Internet)
+
+====== Direcciones reservadas
+
+Hay algunas direcciones multicast reservadas:
+
+* `FF01::1`, todas las intrfaces del nodo
+* `FF02::1`, todos los nodos del enlace
+* `FF02::2`, todos los routers del enlace
+* `FF02::9`, todos los routers RIP del enlace
+* `FF05::1:3`, todos los servidores DHCP en la red local
+
+====== Dirección multicast de nodo solicitado
+
+Son direcciones _multicast_ que sólo escucha un nodo concreto. Tienen la forma
+`FF02::1:FFXX:XXXX` donde `XX:XXXX` se toman de los 24 bits menos significativos
+del identificador de interfaz. Todos los nodos tienen esta dirección. Se mapea
+directamente a la _multicast_ del enlace.
+
+[TIP]
+Mientras que en IPv4 hay que obtener la direcciones _multicast_, en IPv6 los
+prefijos _unicast_ conllevan prefijos _multicast_.
+
+====== Ejemplo de dirección _multicast_
+
+[.text-center]
+----
++----+-------+--------+------+------+------------------+-------------+
++  8 |   4   |    4   |   8  |   8  |        64        |      32     |
++----+-------+--------+------+------+------------------+-------------+
+| FF | Flags | Ámbito | RSVD | Plen |  Network-Prefix  |  Group-ID   |
++----+-------+--------+------+------+------------------+-------------+
+| FF |       3E       |  00  |  40  |  2001:DB8:100:E  |  0000:1111  |
++----+-------+--------+------+------+------------------+-------------+
+----
+
+* `A = 3 = 0b0011`
+  ** `R = 0`: No es un punto de encuentro empotrado.
+  ** `P = 1`: Es una dirección basada en el prefijo unicast.
+  ** `T = 1`: Es una dirección dinámica.
+* `B = E`: Es una dirección global (puede salir a Internet).
+* `RSVD = 00`
+* `Plen = 0x40 = 64`: La dirección del prefijo de red (_Network-Prefix_) es de
+64 bytes.
+* Prefijo de red: `2001:DB8:100:E`.
+* ID de grupo: `0000:1111`.
+
+====== Correspondencia IPv6 multicast con direcciones IEE 802.1 48 bits
+
+[.text-center]
+----
++----+-------+--------+-----------------------+----------------------+
++  8 |   4   |    4   |           80          |           32         |
++----+-------+--------+-----------------------+----------------------+
+| FF | Flags | Ámbito |   Más significativos  | Menos significativos |
++----+-------+--------+---------------+-------+----------------------+
+                                      | 33:33 |     XX:XX:XX:XX      |
+                                      |-------+----------------------+
+                                      |              48              |
+                                      +------------------------------+
+----
+
+[NOTE]
+Los bits más significativos se pierden en la correspondencia.
+
+===== Direcciones _anycast_
+
+Son direcciones asignadas a varias interfaces de *routers* distintos. El paquete
+se entrega al *más cercano*. Las direcciones se encuentran en el mismo espacio
+que las direcciones _unicast_. Nunca deben usarse como direcciones de origen,
+ni por un sistema final (no router).
+
+WARNING: Su uso es en parte expermiental
+
+===== Direcciones imprescindibles
+
+Una interfaz requiere:
+
+* Su dirección local al enlace (de autoconfiguración)
+* Su dirección de bucle (autodirección o loopback)
+* Una dirección unicast
+* La multicast "a todos los nodos"
+* La multicast solicitada para cada unicast y anycast que tenga
+* Las multicast de los grupos a los que pertenezca
+
+Si además es de un router:
+
+* La anycast de las subredes en las interfaces en las que actúa de router
+* La multicast "a todos los routers"
+* Las anycast que tenga configuradas
+
+===== Obtención de direcciones IPv6
+
+Las direcciones IPv6 son asignadas de forma jerárquica por la IANA según
+ubicación. IANA asigna dentro del rango `2000::/3`, un `/12` a cada RIR. Las
+direcciones se asignan a ISPs, no a empresas. Se reparte de forma que:
+
+* Se asigna una partición `/48` por omisión
+* Se asigna una partición `/64` si se sabe que sólo habrá una subred.
+* Se asigna una partición `/128` (una única dirección) si se sabe que es un
+usuario final con un único equipo. 
+
+=== ICMPv6
+
+=== DHCPv6
+
+=== Encaminamiento
+
+=== Migración desde IPv6
