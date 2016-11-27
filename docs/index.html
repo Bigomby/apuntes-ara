@@ -742,10 +742,24 @@ b.conum * { color: inherit !important; }
 <li><a href="#_tipos_de_direcciones">Tipos de direcciones</a></li>
 </ul>
 </li>
-<li><a href="#_icmpv6">ICMPv6</a></li>
+<li><a href="#_icmpv6">ICMPv6</a>
+<ul class="sectlevel3">
+<li><a href="#_descubrimiento_de_mtu">Descubrimiento de MTU</a></li>
+<li><a href="#_establecimiento_de_vecindades_2">Establecimiento de vecindades</a></li>
+<li><a href="#_ventajas_de_icmpv6">Ventajas de ICMPv6</a></li>
+<li><a href="#_descubrimiento_de_destinos_em_multicast_em_mld">Descubrimiento de destinos <em>multicast</em> (MLD)</a></li>
+</ul>
+</li>
 <li><a href="#_dhcpv6">DHCPv6</a></li>
 <li><a href="#_encaminamiento">Encaminamiento</a></li>
-<li><a href="#_migración_desde_ipv6">Migración desde IPv6</a></li>
+<li><a href="#_soporte_sobre_protocolos_de_enlace">Soporte sobre protocolos de enlace</a></li>
+<li><a href="#_dns">DNS</a></li>
+<li><a href="#_migración">Migración</a>
+<ul class="sectlevel3">
+<li><a href="#_pilas_duales">Pilas duales</a></li>
+<li><a href="#_tunelado">Tunelado</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -2189,19 +2203,424 @@ usuario final con un único equipo.</p>
 </div>
 <div class="sect2">
 <h3 id="_icmpv6">ICMPv6</h3>
-
+<div class="listingblock text-center">
+<div class="title">Paquete ICMPv6</div>
+<div class="content">
+<pre>+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Tipo       |     Código     |  Suma de comprobación   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                                                               +
+|                         Datos ICMPv6                          |
++                                                               +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>ICMPv6 se trata de una versión mejorada de ICMP. Incorpora IGMP, ARP/RARP,
+establecimiento de vecindades y movilidad. El código de cabecera es <strong>58</strong>. Se
+dispone de los siguiente tipos de mensaje:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Mensajes de error</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Destino inalcanzable</p>
+</li>
+<li>
+<p>Paquete demasiado grande</p>
+</li>
+<li>
+<p>Tiempo excedido</p>
+</li>
+<li>
+<p>Parámetro erróneo</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Mensajes informativos</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Solicitud y respuesta de eco (128 y 129)</p>
+</li>
+<li>
+<p>Petición, informe y confirmación de oyentes <em>multicast</em> (reemplaza IGMP)</p>
+</li>
+<li>
+<p>Solicitud y anuncio de router:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Solicitud (RS)(133): cuando un equipo está configurado para
+obtener la información de direccionamiento de forma automática mediante la
+configuración automática de dirección sin estado, el equipo envía un
+mensaje de RS al router. El mensaje de RS se envía como un mensaje <strong>IPv6
+multicast de todos los routers</strong>.</p>
+</li>
+<li>
+<p>Anuncio (RA)(134): los routers envían mensajes de RA para proporcionar
+información de direccionamiento a los equipos mediante configuración
+automática de dirección sin estado.
+El mensaje de RA puede incluir información de direccionamiento para el
+equipo, como el prefijo y la duración de prefijo. Los routers envían
+mensajes de RA <strong>de forma periódica o en respuesta a un mensaje de RS</strong>.
+Los mensajes de RA se envían a la <strong>dirección IPv6 multicast de todos los
+nodos</strong>. Los equipos que utilizan configuración automática de dirección sin
+estado establecen su puerta de enlace predeterminada en la dirección
+local al enlace del router que envió el mensaje de RA.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Solicitud y anuncio de vecino (135 y 136)</p>
+</li>
+<li>
+<p>Redirección (137)</p>
+</li>
+<li>
+<p>Petición y respuesta de información sobre el nodo ICMP</p>
+</li>
+<li>
+<p>Solicitud y anuncio inversos de vecino</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_descubrimiento_de_mtu">Descubrimiento de MTU</h4>
+<div class="paragraph">
+<p>Una de las funcionalidades de ICMPv6 es el descubrimiento de la MTU de una
+ruta, es decir, el MTU mínimo de todos los enlaces que componen la ruta. La
+MTU mínima que debe soportar un enlace es 1280 bytes. En IPv4 se fragmentaban
+los paquetes cuando la MTU era menor que el paquete, pero la MTU mínima era
+de 64 bytes.</p>
+</div>
+<div class="paragraph">
+<p>Para enviar paquetes de más de 1280 bytes se puede realizar
+fragmentación (desaconsejado) o se puede descubrir la MTU máxima. Para descubrir
+la MTU se envía un paquete y si un enlace tiene una MTU demasiado pequeña
+rebotará un mensaje ICMPv6 "paquete demasiado grande". El proceso se repite
+hasta que se sepa cuál es la MTU.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_establecimiento_de_vecindades_2">Establecimiento de vecindades</h4>
+<div class="paragraph">
+<p>El objetivo del establecimiento de vecindades es <strong>determinar la dirección de
+enlace</strong> de un vecino del enlace, encontrar <strong>routers vecinos</strong>, detectar
+<strong>direcciones duplicadas</strong> y <strong>monitorizar</strong> la alcanzabilidad del vecino.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Los paquetes ICMPv6 que tienen una cuenta de saltos inferior a 255 se ignoran.
+Esto implica que sólo se procesan los paquetes pertenecientes a la misma
+subred, ya que al ser encaminados se decrementa el valor. Es conveniente
+para evitar ataques provenientes de otras subredes.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_autoconfiguración_sin_estados">Autoconfiguración sin estados</h5>
+<div class="paragraph">
+<p>El mecanismo sin estado permite que un host genere sus propias direcciones.
+Para generar las direcciones, el mecanismo sin estado utiliza la información
+local y la no local anunciada por los encaminadores.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Los encaminadores anuncian todos los prefijos que se han asignado al enlace
+enviando un mensaje RA (134	<em>Router Advertisement</em>). Los equipos pueden
+solicitar en todo momento que se genere un mensaje RA enviando un mensaje
+RS (133 <em>Router Solicitation</em>).</p>
+</li>
+<li>
+<p>Los equipos de IPv6 emplean el protocolo ND para obtener un prefijo de subred a
+partir de un encaminador local.</p>
+</li>
+<li>
+<p>Los equipos crean direcciones IPv6 automáticamente combinando el prefijo de
+subred con un ID de interfaz que se genera a partir de la dirección MAC de una
+interfaz (EUI-64).</p>
+</li>
+<li>
+<p>Si no hay encaminadores, un host puede generar únicamente direcciones locales
+de enlace.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Para configuraciones más complejas como el DNS, se requiere de
+autoconfiguración con estados, es decir, DHCPv6. Para ello, los mensajes RA
+incorporan un flag que anunca que existe un servidor DHCP disponible.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_solicitud_y_anuncio_de_vecinos">Solicitud y anuncio de vecinos</h5>
+<div class="paragraph">
+<p>El protocolo de descubrimiento de vecinos de ICMPv6 incluye dos tipos de
+mensajes adicionales: mensaje de solicitud de vecino (NS) y mensaje de anuncio
+de vecino (NA). Los mensajes de solicitud y de anuncio de vecino se utilizan
+para lo siguiente:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Resolución de direcciones</p>
+</li>
+<li>
+<p>Detección de direcciones duplicadas (DAD)</p>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_resolución_de_direcciones">Resolución de direcciones</h6>
+<div class="paragraph">
+<p>La resolución de direcciones se utiliza cuando un equipo en la LAN conoce
+la dirección IPv6 <em>unicast</em> de un destino, pero no conoce la dirección MAC de
+Ethernet. Para determinar la dirección MAC del destino, el equipo envía un
+mensaje de NS a la dirección de nodo solicitado. El mensaje incluye la dirección
+IPv6 conocida (objetivo). El equipo que tiene la dirección IPv6 objetivo
+responde con un mensaje de NA que contiene la dirección MAC de Ethernet.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_detección_de_direcciones_duplicadas">Detección de direcciones duplicadas</h6>
+<div class="paragraph">
+<p>Cuando se asigna una dirección <em>unicast</em> global o una dirección <em>unicast</em>
+local al enlace a un equipo, se recomienda llevar a cabo la detección de
+direcciones duplicadas (DAD) en la dirección para asegurarse de que sea única.
+Para revisar si una dirección es única, el equipo envía un mensaje de NS
+con su propia dirección IPv6 como la dirección IPv6 objetivo. Si otro
+equipo en la red tiene esta dirección, responde con un mensaje de NA.
+Este mensaje de NA notifica al equipo emisor que la dirección está en uso.
+Si no se devuelve un mensaje de NA correspondiente dentro de determinado
+período, la dirección <em>unicast</em> es única y su uso es aceptable.</p>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_solicitud_y_anuncio_de_vecinos_2">Solicitud y anuncio de vecinos</h5>
+<div class="paragraph">
+<p>Los nodos generan este paquete para informar a los enrutadores de que existe
+una ruta mejor para llegar a un determinado destino. El tipo de paquete es 137.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ventajas_de_icmpv6">Ventajas de ICMPv6</h4>
+<div class="paragraph">
+<p>Cuando se anuncia el router (mensaje RA) el propio mensaje contiene la dirección
+IP del router, por lo que no hace falta configurarlo en el equipo final
+como puerta de enlace. El mensaje también lleva la MAC del router, por lo que
+también se ahorra ejecutar el ciclo ARP. Otro dato que viene en el mensaje es
+la máscara, por lo que es otro parámetro que no necesitamos configurar
+manualmente.</p>
+</div>
+<div class="paragraph">
+<p>Otras ventajas son:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Se puede renumerar todo sin tener que reconfigurar los equipos finales,</p>
+</li>
+<li>
+<p>Autoconfiguración sin estados</p>
+</li>
+<li>
+<p>Descubrir MTU</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_descubrimiento_de_destinos_em_multicast_em_mld">Descubrimiento de destinos <em>multicast</em> (MLD)</h4>
+<div class="paragraph">
+<p>MLD es equivalente a IGMP para IPv4. Existe MLDv1 y MLDv2 para la gestión de
+grupos <em>multicast</em>.</p>
+</div>
+<div class="sect4">
+<h5 id="_mldv1">MLDv1</h5>
+<div class="paragraph">
+<p>Se pueden encontrar los siguientes mensajes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>Query</code>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>General Query</code>: Pregunta a los terminales las direcciones multicast
+que atienden.</p>
+</li>
+<li>
+<p><code>Address Specific Query</code>: Pregunta qué terminales atienden <strong>una dirección
+multicast específica</strong>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>Report</code>: El terminal indica la lista o dirección que atiende.</p>
+</li>
+<li>
+<p><code>Done</code>: El terminal indica que deja de antender una dirección.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_dhcpv6">DHCPv6</h3>
-
+<div class="paragraph">
+<p>Las mejoras de DHCPv6 frente a la versión anterior son:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Nuevo direccionamiento.</p>
+</li>
+<li>
+<p>Más potente que la autoconfiguración sin estados.</p>
+</li>
+<li>
+<p>Puede usarse en entornos sin router.</p>
+</li>
+<li>
+<p>Permite renumeración.</p>
+</li>
+<li>
+<p>Permite registro automático DDNS.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>El funcionamiento es el mismo que en IPv4 pero con la diferencia de que si no
+encuentra routers que soporten DHCP en la subred mediante anuncios RA se envía
+una petición DHCP a la dirección multicast de todos los servidores y repetidores
+DHCP <strong>usando la dirección local al enlace como origen.</strong></p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_encaminamiento">Encaminamiento</h3>
-
+<div class="paragraph">
+<p>Se busca la mejor ruta igual que en IPv4, seleccionando el prefijo coincidente
+más largo. En lugar de RIP se usa RIPng que incluye algunas mejoras y para
+actualizaciones se usa la dirección <code>FF02::9</code>.
+También existe una versión de OSPF para IPv6 (OSPFv3). Algunos añadidos son las
+direcciones IP de <strong>todos los routers OSPF</strong> (<code>FF02::5</code>) y <strong>todos los routers
+OSPF designados</strong> (<code>FF02::6</code>).</p>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_migración_desde_ipv6">Migración desde IPv6</h3>
-
+<h3 id="_soporte_sobre_protocolos_de_enlace">Soporte sobre protocolos de enlace</h3>
+<div class="paragraph">
+<p>IPv6 sobre Ethernet define el formato de trama y datagrama, la formación de
+direcciones autoconfiguradas y locales al enlace y soporta todas las variantes
+(incluida VLAN). MTU en RA superiores a 1500 se ignoran.</p>
+</div>
+<div class="paragraph">
+<p>En IPv6 sobre PPP el identificador de protocolo de PPP es <code>0x0057</code>. Para la
+asignación de direcciones se usa ICMPv6 en lugar de LCP.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dns">DNS</h3>
+<div class="paragraph">
+<p>Se añaden los registros <code>AAAA</code> para búsquedas directas y <code>PTR</code> para búsquedas
+inversas.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_migración">Migración</h3>
+<div class="paragraph">
+<p>Dado que IPv6 debe coexistir con IPv4 existen una serie de alternativas que
+permiten funcionar juntos.</p>
+</div>
+<div class="sect3">
+<h4 id="_pilas_duales">Pilas duales</h4>
+<div class="paragraph">
+<p>Se usan ambos protocolos simultáneamente. Cada aplicación decide qué versión
+IP utilizar dependiendo de cómo sea la respuesta del DNS si hace la petición o
+en función de la IP origin cuando responde a una paquete. Los routers activan
+las pilas según se configuren. Este método permite coexistencia y actualización
+gradual.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tunelado">Tunelado</h4>
+<div class="paragraph">
+<p>Se trata de encapsular el paquete IPv6 dentro de paquetes IPv4 con o sin
+cabecera GRE. Se puede realizar de diferentes formas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Tunelado manual</strong>: La configuración de los extremos del tunel es manual.
+Existe una correspondencia de direcciones IPv6 &lt;&gt; IPv4. <strong>No es escalable</strong>.</p>
+</li>
+<li>
+<p><strong>Tunelado automático</strong>:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>6to4</strong>: Existe una correspondencia automática, para ello se asigna un
+prefijo a la red IPv6. Toda la red comparte el prefijo <strong>6to4</strong>. Es sencill y
+flexible.</p>
+</li>
+<li>
+<p><strong>Intra-Site Automatic Tunnel Addressing Protocol</strong> (ISATAP): Permite migrar
+a IPv6 los sistemas finales de una red privada sin routers IPv6. La conexión
+al exterior requiere routers que actúen como pasarela. Se usa EUI-64 para
+encapsular la dirección IPv4: <code>XXXX:XXXX:XXXX:XXXX:0000:5EFE:a.b.c.d</code>.</p>
+</li>
+<li>
+<p><strong>Teredo</strong>: El único de los métodos que es compatible con NAT. La idea es
+encapsular IPv6 en UDP sobre IPv4 para poder sortear el NAT. Se envía un
+paquete de sondeo para ver si un equipo Teredo responde tras el NAT.</p>
+<div class="listingblock text-center">
+<div class="content">
+<pre>+----------------+-----------------+---------+-----------+-----------+
+| Prefijo Teredo | Servidor Teredo | Tipo de |  Puerto   | Dirección |
+|   2001:0000    | Dirección IPv4  |   NAT   |  Global   | Global    |
++----------------+-----------------+---------+-----------+-----------+</pre>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 </div>
