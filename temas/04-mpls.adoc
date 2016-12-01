@@ -1,0 +1,361 @@
+== Tema 3: Conmutación de etiquetas multiprotocolo (MPLS)
+
+=== Funcionamiento básico
+
+El objetivo original de MPLS era acelerar la conmutación integrando el
+encaminamiento de la capa de red con la conmutación de la capa de enlace.
+Actualmente se utiliza principalmente para ingeniería de tráfico, prestar
+servicios de VPN y tener un control generalizado de la conmutación. Se basa
+en un *mecanismo de tunelado* y es usado por *operadores en su red interna*.
+No se usa en redes corporativas o entre diferentes AS (entre operadores).
+
+Para el funcionamiento de MPLS se requiere un *mecanismo abierto de distribución
+de etiquetas*, soporte para *multidifusión*, *encaminamiento explícito* y múltiples
+*protocolos de capa de subred*.
+
+[TIP]
+La escalabilidad es latexmath:[n \cdot (n-1)] conexiones/destino.
+
+Los encaminadores buscan en la FIB (_Forwarding Information Base_, es decir, la
+tabla de encaminamiento) el prefijo coincidente *más largo*. Se puede ver como
+una asignación a una partición del espacio de rutas. En cada salto de repite
+el proceso de búsqueda y asignación. Un conmutador, en cambio, busca en la tabla
+una *coincidencia total*.
+
+La red MPLS está formada por Encaminadores/Conmutadores (LSRs). Los LSRs extraen
+información de los protocolos de encaminamiento para dividir la tabla de
+encaminamiento en FECs (_Forwarding Equivalence Class_). Como la búsqueda *sólo
+se realiza en el primer LSR* se descarga al núcleo de la red.
+
+==== Definiciones
+
+FEC (_Forwarding Equivalence Class_):: Es un conjunto de datagramas que se
+envían de la misma forma. Es una partición de la FIB.
+Flujo o flujo agregado:: Es un conjunto de datagramas de un origen a un destino.
+Etiqueta:: Identificador de FEC con significado local entre dos nodos. Tiene
+longitud fija.
+LSR (_Label Switching Router_):: Nodo MPLS.
+Nodo frontera:: LSR que delimita un dominio de encaminamiento con MPLS. Puede
+ser de entrada o de salida.
+LSP (_Label Switched Path_):: Es una senda conmutada. Se puede ver como una
+secuencia de etiquetas que determinan una ruta unidireccional.
+
+==== Funcionamiento básico
+
+. Se recibe un datagrama en el nodo frontera.
+. Se busca el siguiente salto de la forma tradicional.
+. Se busca la etiqueta correspondiente a esa FEC.
+. Se etiqueta al datagrama.
+. En los siguientes LSRs sólamente se usa la etiqueta, *que cambia en cada
+salto*.
+
+[TIP]
+Este procedimiento puede ser recursivo, es decir, se pueden asignar etiquetas
+anidadas.
+
+==== Tratamiento de etiquetas
+
+==== Asignación de etiquetas
+
+El proceso de asignación de etiquetas es local a cada LSR. El siguiente nodo
+es quien va a usar la etiqueta como índice en su tabla de reenvío, por lo
+tanto será quien comunique sus etiquetas. Se pueden pedir las etiquetas al
+nodo siguiente.
+
+Pueden coexistir la misma etiqueta en la red siempre y cuando no sea entre dos
+vecinos MPLS. La asignación *no depende de la distribución* y es *única por
+cada interfaz o LSR*.
+
+Las etiquetas se ubican en la cabecera del datagrama si se usa IPv6, en otros
+casos irá en un sitio que dependerá del protocolo.
+
+==== Distribución de etiquetas
+
+Los mecanismmos de distribución de etiquetas en MPLS pueden ser:
+
+* *Independientes*: Cuando un LSR reconoce una FEC le asigna una etiqueta y la
+distribuye a los LSR vecinos, al igual que en el encaminamiento IP.
+* *Ordenada*: Sigue dos reglas concisas:
+  ** Un LER de salida puede asignar una etiqueta a un FEC.
+  ** Un LSR que no es un LER de salida puede asignar una etiqueta a un FEC sólo
+  si ya ha recibido una asignación de etiqueta para ese FEC.
+
+[TIP]
+En una distribución ordenada el flujo de etiquetado va desde el LER de salida
+hacia el LER de entrada.
+
+===== LDP
+
+LDP (_Label Distribution Protocol_) es un protocolo específico para la
+distribución de etitquetas en MPLS. Dispone de mecanismos para el
+establecimiento de *vecindades* y sesiones de *intercambio*, *distribución* de
+etiquetas y envío de *notificaciones*.
+
+====== Descubrimiento de vecinos
+
+La relación de vecindad es jerárquica. Los vecinos LDP que están conectados
+directamente envían mensajes `HELLO` usando UDP a una dirección
+_multicast_, mientras que los vecinos no directamente conectados usan una
+dirección _unicast_.
+
+====== Establecimiento de sesiones
+
+El vecino LDP con la IP más alta inicia la sesión TCP (Se sabe gracias a los
+mensajes `HELLO` previamente intercambiados). Una vez establecida la
+sesión se envía periódicamente un recurdo. Por la sesión se realiza un
+intercambio de pares etiquetas/FEC. También pueden retirarse etiquetas.
+
+====== Control de errores en las sesiones
+
+Cuando se produce una caída de una sesión LDP hay que purgar las etiquetas.
+Cuando no hay una sesión LDP establecida está prohibido cursar datagramas
+sin etiquetas. Mediante IGP se anuncia un coste infinito para el enlace hasta
+que se reestablece la sesión LDP.
+
+Cuando cae la adyacencia IGP también cae la conexión TCP de la sesión LDP y
+el restablecimiento lleva tiemop. Puede protegerse la sesión haciendo a los
+interlocutores vecinos no adyacentes así la sesión permanecerá mientras haya
+alguna ruta válida.
+
+==== Agregación
+
+El procedimiento por el que se asigna una etiqueta a un conjunto de FECs que
+constituyen, a su vez, otra FEC se llama agregación. El objetivo es hacer
+un uso eficiente de las etiquetas y tener menos tráfico de control. Puede
+determinarse de forma estática o dinámica.
+
+Las etiquetas son apilables, pero cuando se encamina sólo se considera la
+etiqueta más reciente. La pila de etiquetas define una jerarquía MPLS, que puede
+coincidir o no con la jerarquía de encaminamiento. Cada vez que se apila una
+nueva etiqueta se puede diferencia flujos pertenecientes a un flujo agregado y
+simplificar la operación al segregar. También se consigue una relación
+jerárquica donde la adyacencia no es imprescindible y se propaga la pila de
+etiquetas.
+
+Cuando se realiza una distribución independiente, el nodo previo puede elegir
+si añade etiquetas (para mismas FECs) para agregar flujos o elimina etiquetas
+para segregarlos.
+
+===== Tabla de operaciones
+
+En la tabla de operaciones se encuentra la información necesaria para
+manipular una etiqueta. Contiene la siguiente información *para cada etiqueta*:
+
+* Siguiente salto
+* Encapsulación de capa dos a usasr
+* Codificación de la pila de etiquetas
+* Operación a realizar en la pila entrante:
+  ** `swap`
+  ** `pop`
+  ** `swap+push`
+  ** `push`
+
+===== Sendero de etiquetas (LSP)
+
+Secuencia de LSR para una FEC que empieza en el LSR que hace `push`, continúa
+con los que hacen `swap` hasta llegar al penúltimo que puede hacer `pop` para
+que llegue al LSR final de salida sin etiqueta.
+
+[TIP]
+Los senderos de una FEC forman un árbol que parte del LSR de salida
+
+===== Etiquetas reservadas
+
+[%autowidth.spread, cols="^m,m,d", options="header"]
+.Etiquetas reservadas
+|===
+| #
+| Etiqueta
+| Descripción
+
+| 0
+| IPv4 Explicit NULL Label
+| Fuerza `pop` en el siguiente y uso de dirección IPv4
+
+| 1
+| Router Alert Label
+| Fuerza procesado local. Propaga la etiqueta
+
+| 2
+| IPv6 Explicit NULL Label
+| Fuerza `pop` en el siguiente y uso de dirección IPv6
+
+| 3
+| Implicit NULL Label
+| No viaja nunca en el paquete. Fuerza `pop` en el nodo previo
+
+| 14
+| Alerta OAM
+|
+
+| 0-16
+| Reservados
+|
+|===
+
+[TIP]
+====
+*Soporte del `pop` en el penúltimo*
+
+Se suele hacer pop en el *penúltimo* LSR para que el LER de salida no tenga
+que hacer `pop` y luego consultar la tabla de encaminamiento, lo que provocaría
+un aumento de la latencia.
+====
+
+==== Conservación de etiquetas
+
+Existen dos estrategias ante la llegada de una nueva etiqueta:
+
+* *Liberal*: El LSR que asigna la etiqueta la comunica a todos los vecinos
+aunque no sean el salto previo para esta FEC. El receptor matiene la asignación
+FEC/etiqueta cuando el LSR en cuestión deja de ser el siguiente salto para
+esta FEC. Consume más memoria ya que necesita memorizar más etiquetas. Es más
+robusta ante cambios ya que conoce otros caminos alternativos.
+* *Conservadora*: Sólo se mantienen las etiquetas correspondientes a las FEC
+para las que el emisor es el siguiente salto. Consume menos memoria, pero si
+el camino conocido se pierde necesita buscar una alternativa.
+
+=== Funciones adicionales
+
+==== Protección ante bucles
+
+En transitorios tanto de capa tres como de MPLS se pueden provocar bucles,
+no representan un problema para estas capas ya que existe un campo TTL. En
+capa dos puede no existir dicho campo, esto se conoce como un *segmento no TTL*.
+Su prevención es opcional, pero su detección es obligatoria.
+
+La detección se realiza en el plano de datos mediante el campo TTL. El uso
+específico depende del protocolo que se use, en caso de IP los saltos entre
+LSR deben contar como un salto entre dos routers IP. Cuando un paquete llega
+desde una red IP al LER de entrada se copia el valor del campo TTL de IP al
+TTL de MPLS. En cada salto se va decrementando el valor TTL de MPLS y cuando el
+paquete llega al LER de salida se copia el valor del TTL de MPLS al de IP.
+
+La prevención se realiza en el plano de control. La idea es incorporar la
+secuencia de LSR a los mensajes de establecimiento de LSP. Un LSR sólamente
+permite progresar el establecimiento de esa sesión LSP si no implica un bucle.
+
+==== Soporte de encaminamiento explícito
+
+Diferentes etiquetas pueden seleccionar diferentes rutas al mismo destino. La
+ruta sólo viaja cuando se establece la LSP (es más eficiente que en la capa de
+red). Existen tres niveles de encaminamiento explícito:
+
+* *Salto a salto*: El LSR sólo determina el siguiente salto.
+* *Laxo*: El LSR de entrada determina algunos LSR por los que se debe pasar.
+* *Estricto*: El LSR de entrada determina la LSP completa.
+
+==== Soporte multiprotocolo
+
+Se determina el protocolo encapsulado cuando se elimina la última etiqueta.
+Se puede hacer de forma implícita usando etiquetas reservadas para cada
+protocolo o usando etiquetas reservadas para familias de protocolos que
+puedan diferenciarse en la cabecera.
+
+==== Soporte multicast
+
+La sesión LSP puede ser multipunto. Si el LSR pertenece a un árbol multicast se
+asocia una etiqueta a dicho árbol, se propaga árbol arriba y se indica en la
+tabla las interfaces de salida. Exige coordinación en LAN.
+
+==== Control  de tráfico
+
+EL objetivo de la ingeniería de tráfico es especificar métodos de control para
+garantizar la calidad de servicio más allá del _best effort_ (se hará lo que
+pueda). En MPLS se da spoorte para la *reserva de recuros* y para el
+*reencaminamiento automático*.
+
+===== RSVP
+
+RSVP es el protocolo de reserva de recursos. Su funcionamiento se basa en
+asociar peticiones de QoS a flujos. Se especifica un flujo (`TSpec`) y una
+calidad necesaria para dicho flujo (`flowspec`). Permite asignar QoS a flujos
+de grano fino. Es poco escalable. En RSVP hay dos mensajes básicos:
+
+* `PATH`: Va en sentido del flujo. Anuncian las características de un flujo.
+* `RESV`: Van en sentido contrario al flujo. Se usan para reservar capacidad.
+La reserva de recursos es laxa, *sino se refresca se deshecha*.
+
+* Los mensajes RSVP se originan y consumen por *sistemas finales*.
+* Los elementos de información de los mensajes se denominan objetos.
+
+===== RSVP-TE
+
+Es la extensión de RSVP con ingeniería de tráfico. Permite el manejo de
+etiquetas y es más escalable. RSVP-TE asocia QoS a flujos y *estos a etiquetas*.
+Se envía un mensaje RESV para enviar la etiqueta. Extensiones:
+
+* `PATH`
+  ** `LABEL REQUEST`
+  ** `EXPLICIT ROUTE`
+  ** `RECORD ROUTE`
+  ** `SENDER TSPEC`
+* `RESV`
+  ** `LABEL`
+  ** `RECORD ROUTE`
+  ** `FLOWSPEC`
+
+[WARNING]
+RSVP-TE proporciona la señalización necesaria para soportar ingeniería de
+tráfico, pero no la ofrece como tal.
+
+===== Métodos para la protección y restauración
+
+* *Protección local*: Conocida como _fast reroute_. Su principal objetivo es la
+recuperación de fallos ene decenas de milisegundos (El encaminamiento IP tarda
+varios segundos).
+Si falla un enlace o un nodo, el LSP protegido se pasa por un LSP de reserva que
+"puentea" el fallo. Un LSP protegido puede tener asignados LSPs de reservar
+sólo par él (_detour LSPs_) o bien varios LSPs pueden compartir enlaces un LSP
+de reserva (_bypass LSP_).
++
+Cuando ocurre un fallo se avisa al LSR origen con un mensaje `PATHERR` que puede
+restaurar el LSP extremo a extremo. Al dejar de funcionar un enlace protegido
+el nodo afectado sustituye la etiqueta protegida por la etiqueta asiganda al
+desvío LSP.
+* *Restauración extremo a extremo*: Ante un fallo en un LSP el LSR de origen
+puede asignar el trancal de tráfico a otro LSR. El nuevo LSP puede estar
+preestablecido o puede establecerse sobre la marcha.
+
+[TIP]
+Pueden usarse los dos métodos conjuntamente. Cuando falla un enlace se usa la
+protección local y se informa al LSR origen que calcula una nueva ruta completa.
+
+==== MPLS y BGP
+
+MPLS permite la eliminación de BGP de los routers interno de la red. En caso de
+no usarse MPLS todos los routers del AS en el trayecto entre dos vecinos BGP
+deben implementar iBGP. Si se usa MPLS sólo se necesita iBGP entre los vecinos
+frontera pero no en los routes que están entre ambos ya que en el núcleo se
+conmuta por etiquetas.
+
+=== GMPLS
+
+MLS Generalizado. Se separan las funciones de conmutación del control de
+etiquetado. Las etiquetas pueden ser cualquier cosa:
+
+* Longituedes de onda
+* Posiciones en una trama TDM
+* Puertos en un repartidor de fibra
+* Etiquetas en un paquete
+
+Los conmutadores pueden ser también cualquier cosa:
+
+* Conmutadores ópticos
+* Repartidores de fibra
+* Conmutadores de circuitos
+* Conmutadores de paquetes
+
+[.text-center]
+.Nuevo formato de etiqueta generalizada
+----
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Codificación LSP | Tipo de conmutación | Identificador de carga útil  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+----
+
+[NOTE]
+====
+* A diferencia de MPLS, las LSP son bidireccionales
+* La distribución usa RSVP-TE con asentimientos
+====

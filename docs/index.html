@@ -762,6 +762,32 @@ b.conum * { color: inherit !important; }
 </li>
 </ul>
 </li>
+<li><a href="#_tema_3_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 3: Conmutación de etiquetas multiprotocolo (MPLS)</a>
+<ul class="sectlevel2">
+<li><a href="#_funcionamiento_básico">Funcionamiento básico</a>
+<ul class="sectlevel3">
+<li><a href="#_definiciones">Definiciones</a></li>
+<li><a href="#_funcionamiento_básico_2">Funcionamiento básico</a></li>
+<li><a href="#_tratamiento_de_etiquetas">Tratamiento de etiquetas</a></li>
+<li><a href="#_asignación_de_etiquetas">Asignación de etiquetas</a></li>
+<li><a href="#_distribución_de_etiquetas">Distribución de etiquetas</a></li>
+<li><a href="#_agregación">Agregación</a></li>
+<li><a href="#_conservación_de_etiquetas">Conservación de etiquetas</a></li>
+</ul>
+</li>
+<li><a href="#_funciones_adicionales">Funciones adicionales</a>
+<ul class="sectlevel3">
+<li><a href="#_protección_ante_bucles">Protección ante bucles</a></li>
+<li><a href="#_soporte_de_encaminamiento_explícito">Soporte de encaminamiento explícito</a></li>
+<li><a href="#_soporte_multiprotocolo">Soporte multiprotocolo</a></li>
+<li><a href="#_soporte_multicast">Soporte multicast</a></li>
+<li><a href="#_control_de_tráfico">Control  de tráfico</a></li>
+<li><a href="#_mpls_y_bgp">MPLS y BGP</a></li>
+</ul>
+</li>
+<li><a href="#_gmpls">GMPLS</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -2624,6 +2650,696 @@ paquete de sondeo para ver si un equipo Teredo responde tras el NAT.</p>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_tema_3_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 3: Conmutación de etiquetas multiprotocolo (MPLS)</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_funcionamiento_básico">Funcionamiento básico</h3>
+<div class="paragraph">
+<p>El objetivo original de MPLS era acelerar la conmutación integrando el
+encaminamiento de la capa de red con la conmutación de la capa de enlace.
+Actualmente se utiliza principalmente para ingeniería de tráfico, prestar
+servicios de VPN y tener un control generalizado de la conmutación. Se basa
+en un <strong>mecanismo de tunelado</strong> y es usado por <strong>operadores en su red interna</strong>.
+No se usa en redes corporativas o entre diferentes AS (entre operadores).</p>
 </div>
+<div class="paragraph">
+<p>Para el funcionamiento de MPLS se requiere un <strong>mecanismo abierto de distribución
+de etiquetas</strong>, soporte para <strong>multidifusión</strong>, <strong>encaminamiento explícito</strong> y múltiples
+<strong>protocolos de capa de subred</strong>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+La escalabilidad es \(n \cdot (n-1)\) conexiones/destino.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Los encaminadores buscan en la FIB (<em>Forwarding Information Base</em>, es decir, la
+tabla de encaminamiento) el prefijo coincidente <strong>más largo</strong>. Se puede ver como
+una asignación a una partición del espacio de rutas. En cada salto de repite
+el proceso de búsqueda y asignación. Un conmutador, en cambio, busca en la tabla
+una <strong>coincidencia total</strong>.</p>
+</div>
+<div class="paragraph">
+<p>La red MPLS está formada por Encaminadores/Conmutadores (LSRs). Los LSRs extraen
+información de los protocolos de encaminamiento para dividir la tabla de
+encaminamiento en FECs (<em>Forwarding Equivalence Class</em>). Como la búsqueda <strong>sólo
+se realiza en el primer LSR</strong> se descarga al núcleo de la red.</p>
+</div>
+<div class="sect3">
+<h4 id="_definiciones">Definiciones</h4>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">FEC (<em>Forwarding Equivalence Class</em>)</dt>
+<dd>
+<p>Es un conjunto de datagramas que se
+envían de la misma forma. Es una partición de la FIB.</p>
+</dd>
+<dt class="hdlist1">Flujo o flujo agregado</dt>
+<dd>
+<p>Es un conjunto de datagramas de un origen a un destino.</p>
+</dd>
+<dt class="hdlist1">Etiqueta</dt>
+<dd>
+<p>Identificador de FEC con significado local entre dos nodos. Tiene
+longitud fija.</p>
+</dd>
+<dt class="hdlist1">LSR (<em>Label Switching Router</em>)</dt>
+<dd>
+<p>Nodo MPLS.</p>
+</dd>
+<dt class="hdlist1">Nodo frontera</dt>
+<dd>
+<p>LSR que delimita un dominio de encaminamiento con MPLS. Puede
+ser de entrada o de salida.</p>
+</dd>
+<dt class="hdlist1">LSP (<em>Label Switched Path</em>)</dt>
+<dd>
+<p>Es una senda conmutada. Se puede ver como una
+secuencia de etiquetas que determinan una ruta unidireccional.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_funcionamiento_básico_2">Funcionamiento básico</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Se recibe un datagrama en el nodo frontera.</p>
+</li>
+<li>
+<p>Se busca el siguiente salto de la forma tradicional.</p>
+</li>
+<li>
+<p>Se busca la etiqueta correspondiente a esa FEC.</p>
+</li>
+<li>
+<p>Se etiqueta al datagrama.</p>
+</li>
+<li>
+<p>En los siguientes LSRs sólamente se usa la etiqueta, <strong>que cambia en cada
+salto</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Este procedimiento puede ser recursivo, es decir, se pueden asignar etiquetas
+anidadas.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_tratamiento_de_etiquetas">Tratamiento de etiquetas</h4>
+
+</div>
+<div class="sect3">
+<h4 id="_asignación_de_etiquetas">Asignación de etiquetas</h4>
+<div class="paragraph">
+<p>El proceso de asignación de etiquetas es local a cada LSR. El siguiente nodo
+es quien va a usar la etiqueta como índice en su tabla de reenvío, por lo
+tanto será quien comunique sus etiquetas. Se pueden pedir las etiquetas al
+nodo siguiente.</p>
+</div>
+<div class="paragraph">
+<p>Pueden coexistir la misma etiqueta en la red siempre y cuando no sea entre dos
+vecinos MPLS. La asignación <strong>no depende de la distribución</strong> y es <strong>única por
+cada interfaz o LSR</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Las etiquetas se ubican en la cabecera del datagrama si se usa IPv6, en otros
+casos irá en un sitio que dependerá del protocolo.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_distribución_de_etiquetas">Distribución de etiquetas</h4>
+<div class="paragraph">
+<p>Los mecanismmos de distribución de etiquetas en MPLS pueden ser:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Independientes</strong>: Cuando un LSR reconoce una FEC le asigna una etiqueta y la
+distribuye a los LSR vecinos, al igual que en el encaminamiento IP.</p>
+</li>
+<li>
+<p><strong>Ordenada</strong>: Sigue dos reglas concisas:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Un LER de salida puede asignar una etiqueta a un FEC.</p>
+</li>
+<li>
+<p>Un LSR que no es un LER de salida puede asignar una etiqueta a un FEC sólo
+si ya ha recibido una asignación de etiqueta para ese FEC.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+En una distribución ordenada el flujo de etiquetado va desde el LER de salida
+hacia el LER de entrada.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_ldp">LDP</h5>
+<div class="paragraph">
+<p>LDP (<em>Label Distribution Protocol</em>) es un protocolo específico para la
+distribución de etitquetas en MPLS. Dispone de mecanismos para el
+establecimiento de <strong>vecindades</strong> y sesiones de <strong>intercambio</strong>, <strong>distribución</strong> de
+etiquetas y envío de <strong>notificaciones</strong>.</p>
+</div>
+<div class="sect5">
+<h6 id="_descubrimiento_de_vecinos">Descubrimiento de vecinos</h6>
+<div class="paragraph">
+<p>La relación de vecindad es jerárquica. Los vecinos LDP que están conectados
+directamente envían mensajes <code>HELLO</code> usando UDP a una dirección
+<em>multicast</em>, mientras que los vecinos no directamente conectados usan una
+dirección <em>unicast</em>.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_establecimiento_de_sesiones">Establecimiento de sesiones</h6>
+<div class="paragraph">
+<p>El vecino LDP con la IP más alta inicia la sesión TCP (Se sabe gracias a los
+mensajes <code>HELLO</code> previamente intercambiados). Una vez establecida la
+sesión se envía periódicamente un recurdo. Por la sesión se realiza un
+intercambio de pares etiquetas/FEC. También pueden retirarse etiquetas.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_control_de_errores_en_las_sesiones">Control de errores en las sesiones</h6>
+<div class="paragraph">
+<p>Cuando se produce una caída de una sesión LDP hay que purgar las etiquetas.
+Cuando no hay una sesión LDP establecida está prohibido cursar datagramas
+sin etiquetas. Mediante IGP se anuncia un coste infinito para el enlace hasta
+que se reestablece la sesión LDP.</p>
+</div>
+<div class="paragraph">
+<p>Cuando cae la adyacencia IGP también cae la conexión TCP de la sesión LDP y
+el restablecimiento lleva tiemop. Puede protegerse la sesión haciendo a los
+interlocutores vecinos no adyacentes así la sesión permanecerá mientras haya
+alguna ruta válida.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_agregación">Agregación</h4>
+<div class="paragraph">
+<p>El procedimiento por el que se asigna una etiqueta a un conjunto de FECs que
+constituyen, a su vez, otra FEC se llama agregación. El objetivo es hacer
+un uso eficiente de las etiquetas y tener menos tráfico de control. Puede
+determinarse de forma estática o dinámica.</p>
+</div>
+<div class="paragraph">
+<p>Las etiquetas son apilables, pero cuando se encamina sólo se considera la
+etiqueta más reciente. La pila de etiquetas define una jerarquía MPLS, que puede
+coincidir o no con la jerarquía de encaminamiento. Cada vez que se apila una
+nueva etiqueta se puede diferencia flujos pertenecientes a un flujo agregado y
+simplificar la operación al segregar. También se consigue una relación
+jerárquica donde la adyacencia no es imprescindible y se propaga la pila de
+etiquetas.</p>
+</div>
+<div class="paragraph">
+<p>Cuando se realiza una distribución independiente, el nodo previo puede elegir
+si añade etiquetas (para mismas FECs) para agregar flujos o elimina etiquetas
+para segregarlos.</p>
+</div>
+<div class="sect4">
+<h5 id="_tabla_de_operaciones">Tabla de operaciones</h5>
+<div class="paragraph">
+<p>En la tabla de operaciones se encuentra la información necesaria para
+manipular una etiqueta. Contiene la siguiente información <strong>para cada etiqueta</strong>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Siguiente salto</p>
+</li>
+<li>
+<p>Encapsulación de capa dos a usasr</p>
+</li>
+<li>
+<p>Codificación de la pila de etiquetas</p>
+</li>
+<li>
+<p>Operación a realizar en la pila entrante:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>swap</code></p>
+</li>
+<li>
+<p><code>pop</code></p>
+</li>
+<li>
+<p><code>swap+push</code></p>
+</li>
+<li>
+<p><code>push</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_sendero_de_etiquetas_lsp">Sendero de etiquetas (LSP)</h5>
+<div class="paragraph">
+<p>Secuencia de LSR para una FEC que empieza en el LSR que hace <code>push</code>, continúa
+con los que hacen <code>swap</code> hasta llegar al penúltimo que puede hacer <code>pop</code> para
+que llegue al LSR final de salida sin etiqueta.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Los senderos de una FEC forman un árbol que parte del LSR de salida
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_etiquetas_reservadas">Etiquetas reservadas</h5>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Tabla 1. Etiquetas reservadas</caption>
+<colgroup>
+<col>
+<col>
+<col>
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">#</th>
+<th class="tableblock halign-left valign-top">Etiqueta</th>
+<th class="tableblock halign-left valign-top">Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>0</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IPv4 Explicit NULL Label</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fuerza <code>pop</code> en el siguiente y uso de dirección IPv4</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Router Alert Label</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fuerza procesado local. Propaga la etiqueta</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>2</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IPv6 Explicit NULL Label</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fuerza <code>pop</code> en el siguiente y uso de dirección IPv6</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>3</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Implicit NULL Label</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No viaja nunca en el paquete. Fuerza <code>pop</code> en el nodo previo</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>14</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Alerta OAM</code></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><code>0-16</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Reservados</code></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p><strong>Soporte del <code>pop</code> en el penúltimo</strong></p>
+</div>
+<div class="paragraph">
+<p>Se suele hacer pop en el <strong>penúltimo</strong> LSR para que el LER de salida no tenga
+que hacer <code>pop</code> y luego consultar la tabla de encaminamiento, lo que provocaría
+un aumento de la latencia.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_conservación_de_etiquetas">Conservación de etiquetas</h4>
+<div class="paragraph">
+<p>Existen dos estrategias ante la llegada de una nueva etiqueta:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Liberal</strong>: El LSR que asigna la etiqueta la comunica a todos los vecinos
+aunque no sean el salto previo para esta FEC. El receptor matiene la asignación
+FEC/etiqueta cuando el LSR en cuestión deja de ser el siguiente salto para
+esta FEC. Consume más memoria ya que necesita memorizar más etiquetas. Es más
+robusta ante cambios ya que conoce otros caminos alternativos.</p>
+</li>
+<li>
+<p><strong>Conservadora</strong>: Sólo se mantienen las etiquetas correspondientes a las FEC
+para las que el emisor es el siguiente salto. Consume menos memoria, pero si
+el camino conocido se pierde necesita buscar una alternativa.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_funciones_adicionales">Funciones adicionales</h3>
+<div class="sect3">
+<h4 id="_protección_ante_bucles">Protección ante bucles</h4>
+<div class="paragraph">
+<p>En transitorios tanto de capa tres como de MPLS se pueden provocar bucles,
+no representan un problema para estas capas ya que existe un campo TTL. En
+capa dos puede no existir dicho campo, esto se conoce como un <strong>segmento no TTL</strong>.
+Su prevención es opcional, pero su detección es obligatoria.</p>
+</div>
+<div class="paragraph">
+<p>La detección se realiza en el plano de datos mediante el campo TTL. El uso
+específico depende del protocolo que se use, en caso de IP los saltos entre
+LSR deben contar como un salto entre dos routers IP. Cuando un paquete llega
+desde una red IP al LER de entrada se copia el valor del campo TTL de IP al
+TTL de MPLS. En cada salto se va decrementando el valor TTL de MPLS y cuando el
+paquete llega al LER de salida se copia el valor del TTL de MPLS al de IP.</p>
+</div>
+<div class="paragraph">
+<p>La prevención se realiza en el plano de control. La idea es incorporar la
+secuencia de LSR a los mensajes de establecimiento de LSP. Un LSR sólamente
+permite progresar el establecimiento de esa sesión LSP si no implica un bucle.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_soporte_de_encaminamiento_explícito">Soporte de encaminamiento explícito</h4>
+<div class="paragraph">
+<p>Diferentes etiquetas pueden seleccionar diferentes rutas al mismo destino. La
+ruta sólo viaja cuando se establece la LSP (es más eficiente que en la capa de
+red). Existen tres niveles de encaminamiento explícito:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Salto a salto</strong>: El LSR sólo determina el siguiente salto.</p>
+</li>
+<li>
+<p><strong>Laxo</strong>: El LSR de entrada determina algunos LSR por los que se debe pasar.</p>
+</li>
+<li>
+<p><strong>Estricto</strong>: El LSR de entrada determina la LSP completa.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_soporte_multiprotocolo">Soporte multiprotocolo</h4>
+<div class="paragraph">
+<p>Se determina el protocolo encapsulado cuando se elimina la última etiqueta.
+Se puede hacer de forma implícita usando etiquetas reservadas para cada
+protocolo o usando etiquetas reservadas para familias de protocolos que
+puedan diferenciarse en la cabecera.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_soporte_multicast">Soporte multicast</h4>
+<div class="paragraph">
+<p>La sesión LSP puede ser multipunto. Si el LSR pertenece a un árbol multicast se
+asocia una etiqueta a dicho árbol, se propaga árbol arriba y se indica en la
+tabla las interfaces de salida. Exige coordinación en LAN.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_control_de_tráfico">Control  de tráfico</h4>
+<div class="paragraph">
+<p>EL objetivo de la ingeniería de tráfico es especificar métodos de control para
+garantizar la calidad de servicio más allá del <em>best effort</em> (se hará lo que
+pueda). En MPLS se da spoorte para la <strong>reserva de recuros</strong> y para el
+<strong>reencaminamiento automático</strong>.</p>
+</div>
+<div class="sect4">
+<h5 id="_rsvp">RSVP</h5>
+<div class="paragraph">
+<p>RSVP es el protocolo de reserva de recursos. Su funcionamiento se basa en
+asociar peticiones de QoS a flujos. Se especifica un flujo (<code>TSpec</code>) y una
+calidad necesaria para dicho flujo (<code>flowspec</code>). Permite asignar QoS a flujos
+de grano fino. Es poco escalable. En RSVP hay dos mensajes básicos:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>PATH</code>: Va en sentido del flujo. Anuncian las características de un flujo.</p>
+</li>
+<li>
+<p><code>RESV</code>: Van en sentido contrario al flujo. Se usan para reservar capacidad.
+La reserva de recursos es laxa, <strong>sino se refresca se deshecha</strong>.</p>
+</li>
+<li>
+<p>Los mensajes RSVP se originan y consumen por <strong>sistemas finales</strong>.</p>
+</li>
+<li>
+<p>Los elementos de información de los mensajes se denominan objetos.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_rsvp_te">RSVP-TE</h5>
+<div class="paragraph">
+<p>Es la extensión de RSVP con ingeniería de tráfico. Permite el manejo de
+etiquetas y es más escalable. RSVP-TE asocia QoS a flujos y <strong>estos a etiquetas</strong>.
+Se envía un mensaje RESV para enviar la etiqueta. Extensiones:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>PATH</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>LABEL REQUEST</code></p>
+</li>
+<li>
+<p><code>EXPLICIT ROUTE</code></p>
+</li>
+<li>
+<p><code>RECORD ROUTE</code></p>
+</li>
+<li>
+<p><code>SENDER TSPEC</code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code>RESV</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>LABEL</code></p>
+</li>
+<li>
+<p><code>RECORD ROUTE</code></p>
+</li>
+<li>
+<p><code>FLOWSPEC</code></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+RSVP-TE proporciona la señalización necesaria para soportar ingeniería de
+tráfico, pero no la ofrece como tal.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_métodos_para_la_protección_y_restauración">Métodos para la protección y restauración</h5>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Protección local</strong>: Conocida como <em>fast reroute</em>. Su principal objetivo es la
+recuperación de fallos ene decenas de milisegundos (El encaminamiento IP tarda
+varios segundos).
+Si falla un enlace o un nodo, el LSP protegido se pasa por un LSP de reserva que
+"puentea" el fallo. Un LSP protegido puede tener asignados LSPs de reservar
+sólo par él (<em>detour LSPs</em>) o bien varios LSPs pueden compartir enlaces un LSP
+de reserva (<em>bypass LSP</em>).</p>
+<div class="paragraph">
+<p>Cuando ocurre un fallo se avisa al LSR origen con un mensaje <code>PATHERR</code> que puede
+restaurar el LSP extremo a extremo. Al dejar de funcionar un enlace protegido
+el nodo afectado sustituye la etiqueta protegida por la etiqueta asiganda al
+desvío LSP.</p>
+</div>
+</li>
+<li>
+<p><strong>Restauración extremo a extremo</strong>: Ante un fallo en un LSP el LSR de origen
+puede asignar el trancal de tráfico a otro LSR. El nuevo LSP puede estar
+preestablecido o puede establecerse sobre la marcha.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Pueden usarse los dos métodos conjuntamente. Cuando falla un enlace se usa la
+protección local y se informa al LSR origen que calcula una nueva ruta completa.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_mpls_y_bgp">MPLS y BGP</h4>
+<div class="paragraph">
+<p>MPLS permite la eliminación de BGP de los routers interno de la red. En caso de
+no usarse MPLS todos los routers del AS en el trayecto entre dos vecinos BGP
+deben implementar iBGP. Si se usa MPLS sólo se necesita iBGP entre los vecinos
+frontera pero no en los routes que están entre ambos ya que en el núcleo se
+conmuta por etiquetas.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_gmpls">GMPLS</h3>
+<div class="paragraph">
+<p>MLS Generalizado. Se separan las funciones de conmutación del control de
+etiquetado. Las etiquetas pueden ser cualquier cosa:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Longituedes de onda</p>
+</li>
+<li>
+<p>Posiciones en una trama TDM</p>
+</li>
+<li>
+<p>Puertos en un repartidor de fibra</p>
+</li>
+<li>
+<p>Etiquetas en un paquete</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Los conmutadores pueden ser también cualquier cosa:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Conmutadores ópticos</p>
+</li>
+<li>
+<p>Repartidores de fibra</p>
+</li>
+<li>
+<p>Conmutadores de circuitos</p>
+</li>
+<li>
+<p>Conmutadores de paquetes</p>
+</li>
+</ul>
+</div>
+<div class="listingblock text-center">
+<div class="title">Nuevo formato de etiqueta generalizada</div>
+<div class="content">
+<pre>+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Codificación LSP | Tipo de conmutación | Identificador de carga útil  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>A diferencia de MPLS, las LSP son bidireccionales</p>
+</li>
+<li>
+<p>La distribución usa RSVP-TE con asentimientos</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  messageStyle: "none",
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]],
+    ignoreClass: "nostem|nolatexmath"
+  },
+  asciimath2jax: {
+    delimiters: [["\\$", "\\$"]],
+    ignoreClass: "nostem|noasciimath"
+  },
+  TeX: { equationNumbers: { autoNumber: "none" } }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
 </body>
 </html>
