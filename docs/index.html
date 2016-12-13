@@ -762,7 +762,7 @@ b.conum * { color: inherit !important; }
 </li>
 </ul>
 </li>
-<li><a href="#_tema_3_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 3: Conmutación de etiquetas multiprotocolo (MPLS)</a>
+<li><a href="#_tema_4_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 4: Conmutación de etiquetas multiprotocolo (MPLS)</a>
 <ul class="sectlevel2">
 <li><a href="#_funcionamiento_básico">Funcionamiento básico</a>
 <ul class="sectlevel3">
@@ -786,6 +786,29 @@ b.conum * { color: inherit !important; }
 </ul>
 </li>
 <li><a href="#_gmpls">GMPLS</a></li>
+</ul>
+</li>
+<li><a href="#_tema_5_ethernet_para_operador">Tema 5: Ethernet para operador</a>
+<ul class="sectlevel2">
+<li><a href="#_soporte_para_vpn">Soporte para VPN</a>
+<ul class="sectlevel3">
+<li><a href="#_802_1q">802.1q</a></li>
+<li><a href="#_802_1ad_q_in_q">802.1ad (Q-in-Q)</a></li>
+</ul>
+</li>
+<li><a href="#_vpn_sobre_ip">VPN sobre IP</a>
+<ul class="sectlevel3">
+<li><a href="#_ethernet_para_mpls">Ethernet para MPLS</a></li>
+<li><a href="#_l2vpn">L2VPN</a></li>
+<li><a href="#_l3vpn">L3VPN</a></li>
+</ul>
+</li>
+<li><a href="#_ieee_vpn">IEEE VPN</a>
+<ul class="sectlevel3">
+<li><a href="#_802_1ah">802.1ah</a></li>
+<li><a href="#_802_1qay_pbb_te">802.1Qay (PBB-TE)</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -2651,7 +2674,7 @@ paquete de sondeo para ver si un equipo Teredo responde tras el NAT.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_tema_3_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 3: Conmutación de etiquetas multiprotocolo (MPLS)</h2>
+<h2 id="_tema_4_conmutación_de_etiquetas_multiprotocolo_mpls">Tema 4: Conmutación de etiquetas multiprotocolo (MPLS)</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_funcionamiento_básico">Funcionamiento básico</h3>
@@ -3320,6 +3343,737 @@ etiquetado. Las etiquetas pueden ser cualquier cosa:</p>
 </td>
 </tr>
 </table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tema_5_ethernet_para_operador">Tema 5: Ethernet para operador</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_soporte_para_vpn">Soporte para VPN</h3>
+<div class="paragraph">
+<p>Los abonados desean interconectar sus redes locales a través del servicio
+ofrecido por el operador. Existen múltiples puntos de acceso a la red local,
+posiblemente con distintas VLANes en cada uno de ellos por lo que <strong>Deben
+respetarse dichas VLANes</strong>.</p>
+</div>
+<div class="paragraph">
+<p>El operador debe construir una red que de soporte a esta interconexión. Debe
+soportar muchos clientes y los datos de diferentes clientes no deben mezclarse.</p>
+</div>
+<div class="sect3">
+<h4 id="_802_1q">802.1q</h4>
+<div class="paragraph">
+<p>Una primera aproximación podría ser el uso de 802.1q asignando una VLAN-ID a
+cada abonado. El número máximo de abonados sería de 4094, suficiente para dar
+servicio a un área metropolitana. Se puede usar el campo de prioridad para dar
+diferentes niveles de servicio.</p>
+</div>
+<div class="paragraph">
+<p>Debido a que las etiquetas las asigna el operador, el usuario <strong>no puede</strong>
+etiquetar tramas o si las etiqueta el operador debe eliminarlas, por lo tanto
+el cliente pierde su capacidad para usar VLANes entre sedes.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_802_1ad_q_in_q">802.1ad (Q-in-Q)</h4>
+<div class="paragraph">
+<p>Se basa en el apilado de VLANes, separando el espacio de etiquetado del cliente
+y del operador. El cliente puede transpotar hasta 4094 VLANes diferentes ya que
+el operador se desentiende de las etiquetas del cliente. La etiqueta del
+operador se conoce como <code>S-TAG</code> (<em>Service Provider TAG</em>) y la del cliente como
+<code>C-TAG</code> (<em>Customer TAG</em>). En el <code>S-TAG</code> se sustituye el campo <code>CFI</code> por el
+<code>DEI</code> (<em>Discard Elegibility Bit</em>) que se usa para aumentar el rango de
+de prioridades <code>PRI</code> para las tramas, aunque requiere un <em>ethertype</em> diferente.</p>
+</div>
+<div class="paragraph">
+<p>Puesto que cada cliente se mapea a una VLAN del operador, el número máximo de
+clientes por operador es de 4094, que no es suficiente para un operador
+completo, aunque sí para un área metropolitana. Otro problema existene es que
+las direcciones MAC de los clientes son visibles dentro de la red del operador
+y viceversa lo cual supone explosión en la caché de aprendizaje de direcciones
+MAC en los puentes del proveedor y que los cambios topológicos <strong>en la red del
+cliente</strong> desencadenan envíos de <code>BCPDU</code> globales.</p>
+</div>
+<div class="paragraph">
+<p>La 802.1ad se parece a MPLS con dos etiquetas apiladas insertándose y
+extrayéndose de forma que sólo se utiliza la más externa, sin embargo:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>En 802.1ad hay puentes, en MPLS hay routers (LSR). Los LSRs usan LDP para
+comunicarse las etiquetas, en los puentes esto se configura a mano.</p>
+</li>
+<li>
+<p>La pila de etiquetas en MPLS identifican a una ruta, en 802.1ad identifican
+dominios de difusión.</p>
+</li>
+<li>
+<p>Si hay fallos en MPLS se realiza una reconfiguración utilizando protocolos
+de encaminamiento, mientras que en 802.1ad se usa MSTP para reconfigurar el
+árbol de expansión.</p>
+</li>
+<li>
+<p>Para conmutar en MPLS se mira la etiqueta, mientras que en 802.1ad se tiene
+en cuenta también la dirección MAC.</p>
+</li>
+</ul>
+</div>
+<div class="sect4">
+<h5 id="_escalabilidad">Escalabilidad</h5>
+<div class="paragraph">
+<p>Todos los puentes de la red, incluidos los del operador, están obligados a
+usar un árbol de expansión y a <strong>aprender las direcciones MAC de los equipos
+del cliente</strong> y asociarlas a sus etiquetas respectivas. Como consecuencia:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Los puentes de operador deben terminar almacenando todas las direcciones MAC
+de todos los equipos de abonado, lo cual termina por agotar la memoria y provoca
+que la conmutación sea lenta.</p>
+</li>
+<li>
+<p>El aprendizaje implica usar STP para determinar la topología por lo que no
+hay soporte para la ingeniería de tráfico y la reserva de capacidad.</p>
+</li>
+<li>
+<p>Los cambios topológicos en la red del abonado implican reconfiguración del
+árbol de expansión (MSTP) que <strong>incluye a todos los puentes del operador</strong>.
+Los tiempos de reconfiguración son elevados (más de 10 segundos).</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_vpn_sobre_ip">VPN sobre IP</h3>
+<div class="paragraph">
+<p>La 802.1ad ataca un problema de capa de red con soluciones de cama de enlace,
+es decir, sin encaminamiento dinámico ni direcciones jerárquicas. El IETF
+propone sustituir los puentes de operador por encaminadores. Se ofrecen los
+siguientes servicios bajo esta nueva perspectiva:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>L2VPN</p>
+</li>
+<li>
+<p>Servicio de enlace privado virtual (VPWS)</p>
+</li>
+<li>
+<p>Servicio de red de área local privada virtual (VPLS)</p>
+</li>
+<li>
+<p>L3VPN</p>
+</li>
+<li>
+<p>Basada en CE</p>
+</li>
+<li>
+<p>Basada en PE</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>La arquitectura de acceso se define en la
+<a href="https://www.ietf.org/rfc/rfc4664.txt">RFC4664</a>. La red de operador es una
+red de conmutación de paquetes (MPLS/IP), con cobertura nacional. Los elementos
+de la red pueden clasificarse en:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong><code>P</code></strong>: Encaminadores interiores.</p>
+</li>
+<li>
+<p><strong><code>PE</code></strong>: Encaminadores/Conmutadores de la frontera de la red.</p>
+</li>
+<li>
+<p><strong><code>CE</code></strong>: Encaminadores/Conmutadores del abonado.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>El abonado interconecta sus redes locales a través del servicio ofrecido con la
+posibilidad de tener:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Múltiples puntos de acceso</p>
+</li>
+<li>
+<p>Diferentes VLANes en cada punto de acceso</p>
+</li>
+<li>
+<p>El tráfico se envía sólo a los puntos de acceso necesario, respetando las
+VLANes de los clientes.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Los diferentes elementos que podemos econtrar en esta arquitectura son:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Circuito de acceso (AC)</strong>: Transporta tramas del cliente al proveedor entre
+el CE y el PE. Puede implementarse con cualquier tecnología que permita
+discriminar tramas de distintos clientes. Los circuitos de acceso de entrada
+y salida no tienen por qué ser de la misma tecnología.</p>
+</li>
+<li>
+<p><strong>Pseudocables emulados extremo a extremo (PWE3)</strong>: Cursan las tramas que
+llegan por los AC. Es un mecanismo de encapsulado que emula sobre una red
+de paquetes las características de interés del AC. Existen varias alternativas
+para implementar un PWE3. Los PWE3 <strong>son unidireccionales</strong>, por lo que se
+requieren dos para una comunicación bidireccional. Varios PWE3 con mismo
+origen y destino se transporta utilizando un <strong>tunel</strong>.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="_ethernet_para_mpls">Ethernet para MPLS</h4>
+<div class="paragraph">
+<p>Pueden transportarse tramas <em>ethernet</em> sobre un LSP en MPLS.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Los túneles se acuerdan mediante LDP entre los Ps y PEs y pueden cambiar salto
+a salto. Se pueden apilar etiquetas adicionales dentro de la red MPLS.</p>
+</li>
+<li>
+<p>Los PWE3 se acuerdan entre PEs, manualmente o mediante el uso de cualquier
+protocolo de señalización de pseudocables. <strong>No cambian entre PE de entrada y
+PE de salida</strong>.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Con MPLS pueden usarse los mecanismos de protección de rutas para garantizar
+un servicio robusto. No es tan rápido como la reconfiguración de SDH, pero sí
+más rápido que RSTP.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Tipos de etiquetas:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Dependiendo del uso por parte del proveedor:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Delimitadora de servicio</strong>: <strong>Son irrelevantes para el abonado</strong>. Se insertan
+por orden del operador en el CE con intención de identificar el tráfico de dos
+abonados cuyos CE se encuentren conectados al mismo PE. Puede ser una S-VID
+802.1ad si el abonado tiene sus propias VLANes o una VID 802.1q si el abonado
+no tiene redes etiquetadas. <strong>Como máximo hay una etiqueta delimitadora</strong>.</p>
+</li>
+<li>
+<p><strong>No delimitadora</strong>: En lugar de ser insertadas en el CE las inserta el propio
+abonado ya que corresponde a una de sus VLANes. Tendrá el formato de la 802.1q y
+<strong>no tiene ningún significado para el operador</strong>. El operador tendrá otro método
+para diferenciar al abonado, ya sea por el puerto del PE al que está conectado o
+por la tecnología del circuito de acceso.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Dependiendo si son transportadas sobre el PWE3:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Etiquetado</strong>: Debe viajar una etiqueta delimitadora obligatoriamente.
+<strong>Debe tener el mismo valor en ambos extremos</strong>.</p>
+</li>
+<li>
+<p><strong>Bruto</strong>: No puede viajar una etiqueta delimitadora.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Las cuatro combinaciones son posibles, siendo la operación a realizar por parte
+del PE mostrada en la tabla:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 10%;">
+<col style="width: 45%;">
+<col style="width: 45%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top"></th>
+<th class="tableblock halign-center valign-top">Llega etiqueta delimitadora</th>
+<th class="tableblock halign-center valign-top">Llega etiqueta no delimitadora</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th class="tableblock halign-left valign-top"><p class="tableblock">Transporte bruto</p></th>
+<td class="tableblock halign-left valign-top"><div><div class="ulist">
+<ul>
+<li>
+<p>Como el transporte es bruto, no puede haber etiqueta delimitadora.</p>
+</li>
+<li>
+<p>Como llega una etiqueta delimitadora, <strong>se elimina</strong>.</p>
+</li>
+</ul>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div><div class="ulist">
+<ul>
+<li>
+<p>Como el transporte es bruto, no puede haber etiqueta delimitadora.</p>
+</li>
+<li>
+<p>Como llega etiqueta no delimitadora <strong>no se hace nada</strong>.</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<th class="tableblock halign-left valign-top"><p class="tableblock">Transporte etiquetado</p></th>
+<td class="tableblock halign-left valign-top"><div><div class="ulist">
+<ul>
+<li>
+<p>Como el transporte es etiquetado, debe haber una etiqueta delimitadora.</p>
+</li>
+<li>
+<p>Como llega una etiqueta delimitadora, <strong>no se hace nada</strong>. El PE también
+puede <strong>añadir</strong> otra etiqueta sobreescribiendo el valor anterior.</p>
+</li>
+</ul>
+</div></div></td>
+<td class="tableblock halign-left valign-top"><div><div class="ulist">
+<ul>
+<li>
+<p>Como el transporte es etiquetado, debe haber una etiqueta delimitadora.</p>
+</li>
+<li>
+<p>Como llega una etiqueta no delimitadora, <strong>se añade</strong> una etiqueta delimitadora
+"<em>dummy</em>".</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_l2vpn">L2VPN</h4>
+<div class="paragraph">
+<p>Es necesario identificar los PEs miembros de la misma VPN y establecer los PWE3
+entre dichos PE, para ello tenemos dos opciones:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>RFC 4761</strong>: Para el descubrimiento y establecimiento de PWE3 se puede usar
+iBGP (en decadencia).</p>
+</li>
+<li>
+<p><strong>RFC 4762</strong>: Para el establecimiento de LDP y si descubrimiento (configuración
+manual) se usa LDP.</p>
+</li>
+</ul>
+</div>
+<div class="sect4">
+<h5 id="_vpws">VPWS</h5>
+<div class="paragraph">
+<p>La red de transporte emula circuitos para interconectar los CE entre sí como
+desee el abonado. Las tramas que son enviadas por el CE a través del AC de
+entrada se recuperan el el AC de salida tal cual.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Cuando el PE recibe una trama se elige el PWE3 dependiendo <strong>sólamente del AC
+de entrada</strong>, y viceversa: el AC de salida sólo atiende al PWE3 de entrada.</p>
+</li>
+<li>
+<p>Para el CE cada AC es una interfaz diferente y escoge el adecuado en función
+de sus tablas de aprendizajes, en caso de ser un puente, o de encaminamiento, si
+es un router.</p>
+</li>
+</ul>
+</div>
+<div class="sect5">
+<h6 id="_características_de_vpws">Características de VPWS</h6>
+<div class="ulist">
+<ul>
+<li>
+<p>La correspondencia entre AC y PWE3 <strong>es siempre 1:1</strong>.</p>
+</li>
+<li>
+<p>El número de AC en cada acceso a la red de transporte dependerá de la
+topología de PWE3 elegida.</p>
+</li>
+<li>
+<p>Los PE <strong>no procesan ni aprenden las direcciones</strong> de las tramas, lo que
+simplifica su funcionamiento.</p>
+</li>
+<li>
+<p>Si los CE son puentes, <strong>no tiene sentido establecer bucles entre ellos</strong>
+mediante PWE3 ya que RSTP los eliminaría.</p>
+</li>
+<li>
+<p>VPWS carga poco a los PE, pero puede obligar a que <strong>una trama se conmute por
+varios PWE3</strong>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_vpls">VPLS</h5>
+<div class="paragraph">
+<p>La red de transporte emula un puente, por lo que sólo se requiere una única
+conmutación para llegar al destino. El PE elige el PWE3 según la MAC destino,
+en lugar del AC de entrada. <strong>El CE sólamente tiene una única interfaz con el
+PE</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Para dar soporte a diferentes abonados sobre distinas VPLSs se identifica a
+cada una de ellas con un VPLS-ID, cuya implementación depende de la tecnología
+concreta utilizada. Por ejemplo, el S-VID en caso de que los AC sean 802.1ad o
+el VID si son 802.1q y la etiqueta es delimitadora.</p>
+</div>
+<div class="sect5">
+<h6 id="_características_de_vpls">Características de VPLS</h6>
+<div class="ulist">
+<ul>
+<li>
+<p>Los PE <strong>son más complejos</strong> ya que se comportan como un puente para cada
+cliente. Esto se conoce como VSI (<em>Virtual Switch Instance</em>) por lo que estos
+dispositivos virtuales deben <strong>aprender direcciones MAC</strong>. Al haber menos PE que
+CE las tablas son aún mayores.</p>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Una solución sería obligar a que los CEs sean siempre routers, de esta forma
+las tramas que se emiten llevan siempre la dirección MAC del router de acceso.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>Los CE <strong>son más simples</strong> ya que sólo se requiere de un AC con el PE puesto que
+no hay que tomar decisiones de encaminamiento.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_pwe3_en_la_troncal">PWE3 en la troncal</h6>
+<div class="paragraph">
+<p>Para que no haya que conmutar dos veces las tramas sobre la red de transporte
+debe asegurarse que llegan de VSI origen a VSI destino en un único salto. La
+forma de hacerlo es establecer una <strong>malla total</strong> de PWE3 entre los VSIs de un
+mismo abonado creando bucles. Para evitar que RSTP elimine enlaces redundantes
+se utiliza <strong>horizonte dividido</strong> entre los VSIs, es decir, que cuando se recibe
+una trama por un PWE3 no se reenvía por otro PWE3.</p>
+</div>
+</div>
+<div class="sect5">
+<h6 id="_h_vpls">H-VPLS</h6>
+<div class="paragraph">
+<p>Las mallas totales <strong>no escalan</strong>. Una posible solución sería crear una jerarquía
+en la red de transporte. La malla total se sustituye por una malla de
+pseudocables medulares y pseudocables radiales. Hay menos PEs y menos PWE3, pero
+las tablas son mayores.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_l3vpn">L3VPN</h4>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Las L3VPN ofrecen un servicio de nivel tres a los clientes, por lo tanto no se
+preservarn las VLANes entre sedes (no tendría sentido de todas formas).
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Las redes L3VPN pueden clasificarse en dos tipos:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>Basadas en CE</strong>: El CE es un encaminador (o LSR) que establece túneles con otros
+CEs de la misma VPN. Su funcionamiento se basa en un VRF (<em>Virtual Router and
+Forwarding</em>) para cada abonado. <strong>Ni CEs ni PEs saben nada de VPN</strong>.</p>
+</li>
+<li>
+<p><strong>Basadas en PE</strong>: El PE es un encamniador (o LSR) que contiene los VRFs.
+<strong>Los CEs y los Ps no saben nada de VPN</strong>.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_ieee_vpn">IEEE VPN</h3>
+<div class="paragraph">
+<p>Los puentes, comparados con los equipos MPLS son menos flexibles y más lentos
+para adaptarse a cambios topológicos, sin embargo, son mucho más baratos. Los
+problemas de escalabilidad y explosión de caché se pueden resolver separando los
+espacios de direcciones MAC de abonado y operador.</p>
+</div>
+<div class="sect3">
+<h4 id="_802_1ah">802.1ah</h4>
+<div class="paragraph">
+<p>La 802.1ah se basa en la separación de direcciones MAC+VLAN del cliente de
+las MAC+VLAN del operador. Las tramas del cliente van enteras sobre las tramas
+de la operadora añadiendo, además, <strong>etiquetas adicionales</strong>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>B-TAG</code>: Backbone TAG. Formato como el de S-TAG. Son VLANes dentro de la
+dorsal que se comportan como túneles.</p>
+</li>
+<li>
+<p><code>I-TAG</code>: Identificador de Servicio. Tiene mayor rango de etiquetado que los
+VID.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>El funcionamiento se basa en separar la red metropolitana y la dorsal. Los
+puentes de la red metropolitana deben aprender la dirección de todos los equipos
+de abonado, <strong>aún cuando no estén en la misma zona geográfica</strong>. Los puentes
+de la dorsal sólo aprenden las direcciones MAC de los puentes frontera, pero
+<strong>no las direcciones MAC de los abonados</strong>.</p>
+</div>
+<div class="paragraph">
+<p>El puente de la frontera de la red 802.1ah debe aprender tanto las MACs de
+cliente como del operador.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Llega una trama a 802.1ad (Contiene C-VID y S-VID).</p>
+</li>
+<li>
+<p>El puente 802.1ah de la frontera calcula la I-SID par la trama <strong>en función de
+la S-VID</strong>.</p>
+</li>
+<li>
+<p>Encapsula la trama y la etiqueta con la I-SID y se envía.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Si la trama va a difusión o no se sabe a donde va se usa la dirección
+destino <code>01:1E:83:&lt;I-SID&gt;</code>. Media dirección MAC, o sea, 24 bits más la I-SID,
+otros 24 bits, componen una MAC completa.</p>
+</li>
+<li>
+<p>Si se conoce su destino se usa la dirección correspondiente a su puente
+frontera que se aprente inspeccionando las tramas M-in-M que llegan.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>Una I-SID identifica globalmente a un cliente.</p>
+</li>
+<li>
+<p>La difusión está limitada al árbol en que se encuentran los puentes dorsales
+que atienden a una I-SID.</p>
+</li>
+<li>
+<p>Múltiples abonados pueden compartir el mismo dominio de difusión.</p>
+</li>
+<li>
+<p>Un mismo abonado puede tener diferentes S-VID en diferentes zonas.</p>
+</li>
+<li>
+<p>B-VID identifica el túnel sobre el que se transportan las VLANes de dorsal.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>En el núcleo de la dorsal la conmutación se realiza según direcciones MAC y
+la B-VID. Sólo hay que aprender direcciones de puentes fronteras mediante la
+inspección de tramas que llegan. Estos elementos son mucho <strong>más simples que los
+puentes de la frontera</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Características diferenciales:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>No hay conexiones</p>
+</li>
+<li>
+<p>Las etiquetas identifican dominios de difusión y son únicas en la red dorsal</p>
+</li>
+<li>
+<p>Las etiquetas se asignan manualmente</p>
+<div class="ulist">
+<ul>
+<li>
+<p>I-SID en el núcleo</p>
+</li>
+<li>
+<p>S-VID en el acceso</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Se usa inundación en las B-VLAN (túneles de la dorsal) para las tramas de
+destino desconocido y aprendizaje posterior. Aprender implica que no no debe
+haber bucles, por lo que se requiere de MSTP para eliminarlos. Como consecuencia
+no hay criterios de tráfico y los cambios topológicos son del orden de diez
+segundos.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Ventajas sobre 802.1ad:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Se resuelve la explosión de cachés <strong>del núcleo</strong> ya que los puentes del núcleo
+no tienen que aprender direcciones de los clientes.</p>
+</li>
+<li>
+<p>Se resuelve la limitación del númeor de abonado, pues al tener el I-SID 24
+bits se puede tener hasta 16 millones de usuarios.</p>
+</li>
+<li>
+<p>Las reconfiguraciones del árbol ocurren de forma independiente en la dorsal
+y en el acceso por lo que la convergencia es algo más rápida.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_802_1qay_pbb_te">802.1Qay (PBB-TE)</h4>
+<div class="paragraph">
+<p>El objetivo de 802.1Qay es la ingeniería de tráfico, para conseguirlo hay
+que recuperar el control de la topología, osea, eliminar MSTP. Como consecuencia
+de esto:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Puede haber bucles, por lo tanto&#8230;&#8203;</p>
+</li>
+<li>
+<p>No puede haber difusión ni auto aprendizaje, por lo tanto&#8230;&#8203;</p>
+</li>
+<li>
+<p>Las tablas de conmutación se hacen <strong>a mano</strong>.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Ahora las B-VID ya no identifican dominios de difusión, de hecho todas las
+tramas dirigidas a difusión se descartan. El encaminamiento se basa en
+B-VID+MAC, que sería como un identificador compuesto de 60 bits. Ahora estas
+B-VID adquieren <strong>significado global</strong> pues representan una ruta hacia una MAC.
+Varias MACs pueden compartir B-VID.</p>
+</div>
+<div class="paragraph">
+<p>802.1Qay da sporte para balancear tráfico y seleccionar rutas de respaldo
+alternativas variando la B-VID. Reemplazar una B-VID es bastante  más rápido
+que reconfigurar el árbol de expansión.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="ulist">
+<ul>
+<li>
+<p>El puente frontera de intreso puede decidir cómo balancear el tráfico.</p>
+</li>
+<li>
+<p>El destino lo marca, exclusivamente, una dirección MAC.</p>
+</li>
+<li>
+<p>La ruta la marca un identificador &lt;MAC:B-VID&gt;.</p>
+</li>
+</ul>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_coexistencia_con_802_1ah">Coexistencia con 802.1ah</h5>
+<div class="paragraph">
+<p>Las tramas son iguales, pueden coexistir en una red. Sin embargo, cuando llega
+una trama con destino desconocido o multidifusión en PBB se difundiría usando
+la dirección de multicast asociada a su I-SID en todo la B-VLAN, mientras que
+en PBB-TE se descartará necesariamente.</p>
+</div>
+<div class="paragraph">
+<p>En cuanto a las B-VID deben ser disjuntas. En PBB-TE se vinculan a un
+identificador de árbol que no está asociando a ningún árbol y se les indica
+de forma manual a los puentes que descarten tramas con &lt;B-VID:MAC&gt; desconocidas
+cuando cuando su B-VID sera de PBB-TE.</p>
+</div>
+</div>
 </div>
 </div>
 </div>
